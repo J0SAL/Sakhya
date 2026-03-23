@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'controllers/game_controller.dart';
 import 'screens/home_dashboard.dart';
 import 'screens/laxmi_didi_chat.dart';
 import 'screens/samriddhi_store.dart';
 import 'screens/scam_guard_simulator.dart';
 
 void main() {
-  runApp(const SakhyaApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => GameController(),
+      child: const SakhyaApp(),
+    ),
+  );
 }
 
 class SakhyaApp extends StatelessWidget {
@@ -23,7 +30,6 @@ class SakhyaApp extends StatelessWidget {
           secondary: Colors.orange,
         ),
         useMaterial3: true,
-        // Optional global styles to enhance "large tap target" intuitive look
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -86,6 +92,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Scam Guard',
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => const ScamGuardSimulatorScreen(),
+          ));
+        },
+        backgroundColor: Colors.red,
+        icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+        label: const Text('Test Mock Scam Call', style: TextStyle(color: Colors.white)),
       ),
     );
   }

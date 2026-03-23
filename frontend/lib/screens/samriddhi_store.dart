@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../controllers/game_controller.dart';
+import '../widgets/notification_overlay.dart';
 
 class SamriddhiStoreScreen extends StatelessWidget {
   const SamriddhiStoreScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final rewardPoints = context.watch<GameController>().rewardPoints;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Samriddhi Store'),
@@ -19,14 +25,14 @@ class SamriddhiStoreScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.account_balance_wallet, color: Colors.orange),
+                  const Icon(Icons.stars, color: Colors.orange),
                   const SizedBox(width: 8),
                   Text(
-                    'Wallet: 800',
+                    'Reward Points: $rewardPoints',
                     style: TextStyle(
                       color: Colors.orange.shade900,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -43,15 +49,15 @@ class SamriddhiStoreScreen extends StatelessWidget {
           mainAxisSpacing: 16.0,
           childAspectRatio: 0.75,
           children: [
-            _buildStoreItem('School Books', 500, Icons.menu_book),
-            _buildStoreItem('Seeds', 200, Icons.park),
+            _buildStoreItem(context, 'School Books', 50, Icons.menu_book),
+            _buildStoreItem(context, 'Seeds', 20, Icons.park),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStoreItem(String title, int cost, IconData icon) {
+  Widget _buildStoreItem(BuildContext context, String title, int cost, IconData icon) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -67,11 +73,18 @@ class SamriddhiStoreScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
-              'Cost: $cost',
+              'Cost: $cost pts',
               style: const TextStyle(fontSize: 16, color: Colors.orange, fontWeight: FontWeight.bold),
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                final success = context.read<GameController>().buyItemWithPoints(cost);
+                if (success) {
+                  NotificationOverlay.show(context, 'Asset Acquired!', isSuccess: true);
+                } else {
+                  NotificationOverlay.show(context, 'Not enough points to buy $title!', isError: true);
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,

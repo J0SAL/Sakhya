@@ -1,10 +1,18 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../controllers/game_controller.dart';
+import '../widgets/notification_overlay.dart';
+import 'upi_practice_screen.dart';
 
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<GameController>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Dashboard'),
@@ -35,9 +43,42 @@ class HomeDashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '₹450',
+                      '₹${controller.unallocatedIncome}',
                       style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.orange.shade800),
                     ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        final amounts = [200, 450];
+                        final newIncome = amounts[Random().nextInt(amounts.length)];
+                        context.read<GameController>().startNewDay(newIncome);
+                        NotificationOverlay.show(
+                          context, 
+                          'Naya din, naya faisla. Aaj ki kamai dekhein?', 
+                          isSuccess: true
+                        );
+                      },
+                      child: const Text('Start New Day'),
+                    ),
+                    const SizedBox(height: 16),
+                     // Draggable income part
+                    if (controller.unallocatedIncome > 0)
+                      Draggable<int>(
+                        data: 100, // Dragging fixed chunks 
+                        feedback: Material(
+                          color: Colors.transparent,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(8)),
+                            child: const Text('₹100', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        childWhenDragging: Opacity(
+                          opacity: 0.5,
+                          child: _buildIncomeChip('Dragging ₹100...'),
+                        ),
+                        child: _buildIncomeChip('Drag ₹100 to allocate'),
+                      ),
                   ],
                 ),
               ),
@@ -56,44 +97,93 @@ class HomeDashboardScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildPot(context, 'Ghar (Home)', Icons.home, Colors.blue),
-                const Icon(Icons.compare_arrows, size: 40, color: Colors.grey),
-                _buildPot(context, 'Dhanda (Business)', Icons.store, Colors.orange),
+                _buildDragTargetPot(context, 'Home', Icons.home, Colors.blue, controller.homePotBalance),
+                const Padding(
+                  padding: EdgeInsets.only(top: 60.0),
+                  child: Icon(Icons.compare_arrows, size: 40, color: Colors.grey),
+                ),
+                _buildDragTargetPot(context, 'Business', Icons.store, Colors.orange, controller.businessPotBalance),
               ],
             ),
+            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPot(BuildContext context, String title, IconData icon, Color color) {
+  Widget _buildIncomeChip(String text) {
     return Container(
-      width: 140,
-      height: 160,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.5), width: 2),
+        color: Colors.orange.shade200,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange, width: 2),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 48, color: color),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '₹0',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
-          ),
-        ],
-      ),
+      child: Text(text, style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildDragTargetPot(BuildContext context, String title, IconData icon, Color color, int balance) {
+    return DragTarget<int>(
+      onAcceptWithDetails: (details) {
+        final amount = details.data;
+        context.read<GameController>().allocateIncome(title, amount);
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isHovered = candidateData.isNotEmpty;
+        return Column(
+          children: [
+            Container(
+              width: 140,
+              height: 160,
+              decoration: BoxDecoration(
+                color: isHovered ? color.withOpacity(0.3) : color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: isHovered ? color : color.withOpacity(0.5), width: 2),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 48, color: color),
+                  const SizedBox(height: 16),
+                  Text(
+                    title == 'Home' ? 'Ghar (Home)' : 'Dhanda (Business)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '₹$balance',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+                  ),
+                ],
+              ),
+            ),
+            if (title == 'Business') ...[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: balance >= 100
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const UPIPracticeScreen()),
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.shopping_cart, size: 16),
+                label: const Text('Buy Supplies (₹100)'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ]
+          ],
+        );
+      },
     );
   }
 }

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../controllers/game_controller.dart';
+import '../widgets/notification_overlay.dart';
+import 'otp_pin_pad_screen.dart';
 
 class ScamGuardSimulatorScreen extends StatelessWidget {
   const ScamGuardSimulatorScreen({super.key});
@@ -53,8 +58,30 @@ class ScamGuardSimulatorScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildCallButton(Icons.call_end, Colors.red, 'Decline'),
-                  _buildCallButton(Icons.call, Colors.green, 'Answer'),
+                  _buildCallButton(Icons.call_end, Colors.red, 'Decline', () {
+                    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+                    context.read<GameController>().completeScamEncounter(true);
+                    
+                    NotificationOverlay.show(context, 'Good job! You avoided a scam.', isSuccess: true);
+                    // Only pop if we pushed a route (e.g. from FAB). If inside BottomNav, it doesn't do much.
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  }),
+                  _buildCallButton(Icons.call, Colors.green, 'Answer', () async {
+                    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+                    // Navigate to OTP Screen
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const OtpPinPadScreen()),
+                    );
+                    
+                    if (context.mounted && Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  }),
                 ],
               ),
               const SizedBox(height: 60),
@@ -65,12 +92,12 @@ class ScamGuardSimulatorScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCallButton(IconData icon, Color color, String label) {
+  Widget _buildCallButton(IconData icon, Color color, String label, VoidCallback onPressed) {
     return Column(
       children: [
         FloatingActionButton.large(
           heroTag: label,
-          onPressed: () {},
+          onPressed: onPressed,
           backgroundColor: color,
           child: Icon(icon, size: 40, color: Colors.white),
         ),
