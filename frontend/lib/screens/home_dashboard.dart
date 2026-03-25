@@ -45,7 +45,7 @@ class HomeDashboardScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        final amounts = [200, 450];
+                        final amounts = [200, 300, 400, 500];
                         final newIncome = amounts[Random().nextInt(amounts.length)];
                         context.read<GameController>().startNewDay(newIncome);
                         NotificationOverlay.show(

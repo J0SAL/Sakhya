@@ -39,13 +39,8 @@ class _UPIPracticeScreenState extends State<UPIPracticeScreen> {
       _isSuccess = true;
     });
 
-    context.read<GameController>().completeUpiPayment();
+    context.read<GameController>().completeCurrentTask(20, businessDeduction: 100);
     NotificationOverlay.show(context, '🔊 Audio plays: "Ek sau rupaye prapt hue"', isSuccess: true);
-    
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted && Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
   }
 
   void _handleDelete() {

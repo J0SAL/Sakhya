@@ -69,9 +69,8 @@ class OtpPinPadScreen extends StatelessWidget {
     if (ModalRoute.of(context)?.isCurrent != true) return;
 
     // Immediate consequences
-    context.read<GameController>().completeScamEncounter(false);
+    context.read<GameController>().completeCurrentTask(-20);
     NotificationOverlay.show(context, 'Never share your OTP! Points lost.', isError: true);
-    Navigator.of(context).pop();
   }
 }
 

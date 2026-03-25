@@ -61,7 +61,7 @@ class ScamGuardSimulatorScreen extends StatelessWidget {
                   _buildCallButton(Icons.call_end, Colors.red, 'Decline', () {
                     if (ModalRoute.of(context)?.isCurrent != true) return;
 
-                    context.read<GameController>().completeScamEncounter(true);
+                    context.read<GameController>().completeCurrentTask(50);
                     
                     NotificationOverlay.show(context, 'Good job! You avoided a scam.', isSuccess: true);
                     // Only pop if we pushed a route (e.g. from FAB). If inside BottomNav, it doesn't do much.
