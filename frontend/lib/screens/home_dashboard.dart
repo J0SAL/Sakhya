@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../controllers/game_controller.dart';
 import '../widgets/notification_overlay.dart';
-import 'upi_practice_screen.dart';
 
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
@@ -14,9 +13,6 @@ class HomeDashboardScreen extends StatelessWidget {
     final controller = context.watch<GameController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Dashboard'),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -140,9 +136,9 @@ class HomeDashboardScreen extends StatelessWidget {
               width: 140,
               height: 160,
               decoration: BoxDecoration(
-                color: isHovered ? color.withOpacity(0.3) : color.withOpacity(0.1),
+                color: isHovered ? color.withAlpha(76) : color.withAlpha(25),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isHovered ? color : color.withOpacity(0.5), width: 2),
+                border: Border.all(color: isHovered ? color : color.withAlpha(128), width: 2),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -161,26 +157,7 @@ class HomeDashboardScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            if (title == 'Business') ...[
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: balance >= 100
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const UPIPracticeScreen()),
-                        );
-                      }
-                    : null,
-                icon: const Icon(Icons.shopping_cart, size: 16),
-                label: const Text('Buy Supplies (₹100)'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ]
+            )
           ],
         );
       },

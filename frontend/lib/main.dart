@@ -6,6 +6,9 @@ import 'screens/home_dashboard.dart';
 import 'screens/laxmi_didi_chat.dart';
 import 'screens/samriddhi_store.dart';
 import 'screens/scam_guard_simulator.dart';
+import 'screens/streak_calendar_screen.dart';
+import 'screens/upi_practice_screen.dart';
+import 'screens/user_profile_screen.dart';
 
 void main() {
   runApp(
@@ -56,13 +59,56 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeDashboardScreen(),
     LaxmiDidiChatScreen(),
-    SamriddhiStoreScreen(),
     ScamGuardSimulatorScreen(),
+    UPIPracticeScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
+              child: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.person, color: Colors.white)),
+            ),
+            const SizedBox(width: 24),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StreakCalendarScreen())),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_fire_department, color: Colors.orange, size: 32),
+                  const SizedBox(width: 4),
+                  Text('${context.watch<GameController>().streakDays}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 24)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SamriddhiStoreScreen())),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(20)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.stars, color: Colors.orange, size: 24),
+                      const SizedBox(width: 8),
+                      Text('${context.watch<GameController>().rewardPoints}', style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.bold, fontSize: 18)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -84,24 +130,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Laxmi Didi',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'Store',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.security),
             label: 'Scam Guard',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.qr_code_scanner),
+            label: 'UPI Practice',
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const ScamGuardSimulatorScreen(),
-          ));
-        },
-        backgroundColor: Colors.red,
-        icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
-        label: const Text('Test Mock Scam Call', style: TextStyle(color: Colors.white)),
       ),
     );
   }

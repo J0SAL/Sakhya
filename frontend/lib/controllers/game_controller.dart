@@ -5,6 +5,7 @@ class GameController extends ChangeNotifier {
   int homePotBalance = 0;
   int businessPotBalance = 0;
   int unallocatedIncome = 0;
+  int streakDays = 2; // Duolingo style streak counter
 
   void startNewDay(int newIncome) {
     unallocatedIncome += newIncome;
