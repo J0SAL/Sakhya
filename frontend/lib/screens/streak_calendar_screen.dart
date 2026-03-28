@@ -1,77 +1,119 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../controllers/game_controller.dart';
+import '../theme/app_theme.dart';
 
 class StreakCalendarScreen extends StatelessWidget {
   const StreakCalendarScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final streak = context.watch<GameController>().streakDays;
+    final controller = context.watch<GameController>();
+    final streak = controller.streakDays;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Streak Calendar'),
-      ),
+      backgroundColor: AppColors.cream,
+      appBar: AppBar(title: const Text('Streak')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.local_fire_department, color: Colors.orange, size: 64),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$streak',
-                      style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.orange),
-                    ),
-                    const Text(
-                      'Day Streak!',
-                      style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: CalendarDatePicker(
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                  onDateChanged: (DateTime value) { 
-                    // Visual only - picking dates does nothing
-                  },
-                ),
+            // Flame + count
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFFF6F00), Color(0xFFE65100)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🔥', style: TextStyle(fontSize: 64)),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('$streak', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 56)),
+                      const Text('Din Ki Streak!', style: TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
+
+            // Last 7 days
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: AppTheme.warmCard(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Pichhle 7 Din', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (i) {
+                      final daysAgo = 6 - i;
+                      final date = DateTime.now().subtract(Duration(days: daysAgo));
+                      final dayName = ['So', 'Ma', 'Bu', 'Gu', 'Sh', 'Sa', 'Ra'][date.weekday % 7];
+                      // Mark "completed" for demo — last `streak` days
+                      final completed = daysAgo < streak;
+                      final isToday = daysAgo == 0;
+                      return Column(
+                        children: [
+                          Text(dayName, style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: isToday ? FontWeight.w700 : FontWeight.w400)),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: completed ? AppColors.kumkum : AppColors.divider.withAlpha(80),
+                              shape: BoxShape.circle,
+                              border: isToday ? Border.all(color: AppColors.kumkum, width: 2) : null,
+                            ),
+                            child: Center(child: Text(completed ? '🔥' : '○', style: TextStyle(fontSize: completed ? 18 : 16, color: completed ? Colors.white : AppColors.textSecondary))),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Motivation
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
+              decoration: BoxDecoration(color: AppColors.leafGreen.withAlpha(15), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.leafGreen.withAlpha(40))),
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.green),
-                  SizedBox(width: 12),
+                  const Icon(Icons.emoji_events, color: AppColors.leafGreen, size: 28),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Complete an activity tomorrow to keep your streak alive and earn bonus reward points!',
-                      style: TextStyle(fontSize: 16, color: Colors.green),
+                      streak >= 7
+                          ? '🏆 Waah! Ek poora hafta! Aap kisi se kam nahi!'
+                          : streak >= 3
+                              ? '💪 Bahut achha! Kal bhi khelein aur streak rakhen!'
+                              : 'Aaj khelen aur apni streak shuru karein! 🌟',
+                      style: const TextStyle(color: AppColors.deepGreen, fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            // Full calendar
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: AppTheme.warmCard(),
+              child: CalendarDatePicker(
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2024),
+                lastDate: DateTime(2030),
+                onDateChanged: (_) {},
               ),
             ),
           ],

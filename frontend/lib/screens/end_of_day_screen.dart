@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controllers/game_controller.dart';
+import '../theme/app_theme.dart';
+
+class EndOfDayScreen extends StatefulWidget {
+  const EndOfDayScreen({super.key});
+
+  @override
+  State<EndOfDayScreen> createState() => _EndOfDayScreenState();
+}
+
+class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+  bool _completed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  void _complete(BuildContext context) {
+    setState(() => _completed = true);
+    context.read<GameController>().completeEndOfDay();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<GameController>();
+    final income = controller.dailyIncome;
+    final ghar = controller.gharBalance;
+    final dhanda = controller.dhandaBalance;
+    final totalSavings = controller.totalSavings;
+    final progress = controller.monthlyGoalProgress;
+
+    // Estimate expense — will be finalised on completeEndOfDay()
+    final user = controller.currentUser;
+    final estExpense = user != null ? ((user.dailyExpenseMin + user.dailyExpenseMax) ~/ 2 ~/ 50) * 50 : 150;
+    final estSavings = (ghar - estExpense).clamp(0, ghar);
+
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 30, 20, 40),
+            child: Column(
+              children: [
+                const Text('🌇', style: TextStyle(fontSize: 64)),
+                const SizedBox(height: 12),
+                Text('Din Khatam Hua!', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppColors.deepGreen)),
+                const SizedBox(height: 4),
+                Text('Aaj aapne kitna sambhala?', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 32),
+
+                // Income breakdown
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: AppTheme.warmCard(),
+                  child: Column(
+                    children: [
+                      _buildRow(context, '💰 Aaj ki Kamai', '₹$income', AppColors.leafGreen),
+                      const Divider(height: 24, color: AppColors.divider),
+                      _buildRow(context, '🏠 Ghar pot (shuru)', '₹$ghar', AppColors.leafGreen),
+                      const SizedBox(height: 8),
+                      _buildRow(context, '🍚 Ghar ka kharcha (est.)', '-₹$estExpense', AppColors.kumkum),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [AppColors.leafGreen.withAlpha(30), AppColors.turmeric.withAlpha(20)]),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('🌟 Aaj Ki Bachat', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.deepGreen)),
+                            Text('≈₹$estSavings', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.leafGreen)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildRow(context, '🪡 Dhanda baaki', '₹$dhanda', AppColors.turmeric),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Monthly progress
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: AppTheme.warmCard(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Mahiney Ka Lakshya 🎯', style: Theme.of(context).textTheme.headlineSmall),
+                          Text('₹${totalSavings + estSavings} / ₹${controller.monthlyGoal}', style: TextStyle(color: AppColors.leafGreen, fontWeight: FontWeight.w700, fontSize: 14)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: ((totalSavings + estSavings) / controller.monthlyGoal).clamp(0.0, 1.0),
+                          backgroundColor: AppColors.divider,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.leafGreen),
+                          minHeight: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('${(progress * 100).toStringAsFixed(0)}% lakshya poora!', style: TextStyle(color: AppColors.deepGreen, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // CTA
+                if (!_completed)
+                  ElevatedButton(
+                    onPressed: () => _complete(context),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.leafGreen),
+                    child: const Text('Bachat Jama Karein & Summary Dekhein 📊'),
+                  )
+                else
+                  const Column(
+                    children: [
+                      SizedBox(height: 8),
+                      CircularProgressIndicator(color: AppColors.leafGreen),
+                      SizedBox(height: 12),
+                      Text('Summary khul rahi hai...', style: TextStyle(color: AppColors.textSecondary)),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(BuildContext context, String label, String value, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodyLarge),
+        Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: color)),
+      ],
+    );
+  }
+}

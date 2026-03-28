@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../controllers/game_controller.dart';
-import '../widgets/notification_overlay.dart';
+import '../theme/app_theme.dart';
 
 class UPIPracticeScreen extends StatefulWidget {
   const UPIPracticeScreen({super.key});
@@ -18,36 +17,24 @@ class _UPIPracticeScreenState extends State<UPIPracticeScreen> {
 
   void _handlePinPress(String digit) {
     if (_isProcessing || _isSuccess || _pin.length >= 6) return;
-    setState(() {
-      _pin += digit;
-    });
-    if (_pin.length == 6) {
-      _processPayment();
-    }
+    setState(() => _pin += digit);
+    if (_pin.length == 6) _processPayment();
   }
 
   void _processPayment() async {
-    setState(() {
-      _isProcessing = true;
-    });
+    setState(() => _isProcessing = true);
     await Future.delayed(const Duration(milliseconds: 1500));
-    
     if (!mounted) return;
-    
-    setState(() {
-      _isProcessing = false;
-      _isSuccess = true;
-    });
-
-    context.read<GameController>().completeCurrentTask(20, businessDeduction: 100);
-    NotificationOverlay.show(context, '🔊 Audio plays: "Ek sau rupaye prapt hue"', isSuccess: true);
+    setState(() { _isProcessing = false; _isSuccess = true; });
+    // In new flow, UPI is part of Store-1 checkout — just a UI demo here
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('🔊 "Ek sau rupaye prapt hue" +1 sikka!'), backgroundColor: AppColors.successGreen),
+    );
   }
 
   void _handleDelete() {
     if (_isProcessing || _isSuccess || _pin.isEmpty) return;
-    setState(() {
-      _pin = _pin.substring(0, _pin.length - 1);
-    });
+    setState(() => _pin = _pin.substring(0, _pin.length - 1));
   }
 
   @override
@@ -56,83 +43,55 @@ class _UPIPracticeScreenState extends State<UPIPracticeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('UPI Payment'),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: AppColors.leafGreen,
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Viewfinder
           Container(
-            height: 150,
+            height: 130,
             width: double.infinity,
             color: Colors.black87,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.greenAccent, width: 2),
-                  ),
-                ),
+                Container(width: 80, height: 80, decoration: BoxDecoration(border: Border.all(color: Colors.greenAccent, width: 2))),
                 const Text('Scan QR', style: TextStyle(color: Colors.white54)),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          const Text('Paying: Local Wholesaler', style: TextStyle(fontSize: 18, color: Colors.black54)),
-          const SizedBox(height: 8),
-          const Text('₹100', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          
-          if (_isProcessing)
-            const CircularProgressIndicator()
-          else if (_isSuccess)
-            const Icon(Icons.check_circle, color: Colors.green, size: 64)
-          else ...[
-            // Pin dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(6, (index) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: index < _pin.length ? Colors.black : Colors.grey.shade300,
-                    shape: BoxShape.circle,
-                  ),
-                );
-              }),
-            ),
-          ],
-          
+          const SizedBox(height: 20),
+          const Text('Payment To: Local Wholesaler', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+          Text('₹${context.watch<GameController>().cartTotal > 0 ? context.watch<GameController>().cartTotal : 100}', style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          const SizedBox(height: 20),
+          if (_isProcessing) const CircularProgressIndicator(color: AppColors.leafGreen)
+          else if (_isSuccess) const Icon(Icons.check_circle, color: AppColors.successGreen, size: 64)
+          else Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(6, (i) => Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: 18, height: 18,
+              decoration: BoxDecoration(
+                color: i < _pin.length ? AppColors.textPrimary : AppColors.divider,
+                shape: BoxShape.circle,
+              ),
+            )),
+          ),
           const Spacer(),
-          // Pin Pad
           Container(
-            color: Colors.grey.shade100,
+            color: AppColors.lightCream,
             child: GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 3,
-              childAspectRatio: 2,
+              shrinkWrap: true, crossAxisCount: 3, childAspectRatio: 2,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                ...List.generate(9, (index) {
-                  return TextButton(
-                    onPressed: () => _handlePinPress('${index + 1}'),
-                    child: Text('${index + 1}', style: const TextStyle(fontSize: 24, color: Colors.black)),
-                  );
-                }),
+                ...List.generate(9, (i) => TextButton(
+                  onPressed: () => _handlePinPress('${i + 1}'),
+                  child: Text('${i + 1}', style: const TextStyle(fontSize: 24, color: AppColors.textPrimary)),
+                )),
                 const SizedBox.shrink(),
-                TextButton(
-                  onPressed: () => _handlePinPress('0'),
-                  child: const Text('0', style: TextStyle(fontSize: 24, color: Colors.black)),
-                ),
-                TextButton(
-                  onPressed: _handleDelete,
-                  child: const Icon(Icons.backspace, color: Colors.black),
-                ),
+                TextButton(onPressed: () => _handlePinPress('0'), child: const Text('0', style: TextStyle(fontSize: 24, color: AppColors.textPrimary))),
+                TextButton(onPressed: _handleDelete, child: const Icon(Icons.backspace, color: AppColors.textPrimary)),
               ],
             ),
           ),

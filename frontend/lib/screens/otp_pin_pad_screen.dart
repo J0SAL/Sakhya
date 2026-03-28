@@ -1,92 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../controllers/game_controller.dart';
-import '../widgets/notification_overlay.dart';
+import '../theme/app_theme.dart';
 
-class OtpPinPadScreen extends StatelessWidget {
+/// Used within scam dojo — shown in the dark scam dialog context
+class OtpPinPadScreen extends StatefulWidget {
   const OtpPinPadScreen({super.key});
+
+  @override
+  State<OtpPinPadScreen> createState() => _OtpPinPadScreenState();
+}
+
+class _OtpPinPadScreenState extends State<OtpPinPadScreen> {
+  String _pin = '';
+
+  void _tap(String digit) {
+    if (_pin.length < 4) {
+      setState(() => _pin += digit);
+      if (_pin.length == 4) {
+        // Auto-dismiss after "entering" OTP — will be handled by caller
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) Navigator.pop(context);
+        });
+      }
+    }
+  }
+
+  void _delete() {
+    if (_pin.isNotEmpty) setState(() => _pin = _pin.substring(0, _pin.length - 1));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF1A0A00),
       appBar: AppBar(
-        title: const Text('Enter OTP'),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text('OTP Darj Karein', style: TextStyle(color: Colors.white, fontSize: 16)),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Text(
-                'Please enter the 4-digit code sent to your phone to complete KYC.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18),
-              ),
+      body: Column(
+        children: [
+          const SizedBox(height: 20),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              '⚠️ Kabhi bhi OTP kisi ke saath share mat karein — banks, police ya koi bhi nahi!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.turmeric, fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          ),
+          const SizedBox(height: 32),
+          // OTP dots
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(4, (i) => Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              width: 50, height: 60,
+              decoration: BoxDecoration(
+                color: i < _pin.length ? AppColors.errorRed.withAlpha(40) : Colors.white12,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: i < _pin.length ? AppColors.errorRed : Colors.white24),
+              ),
+              child: Center(child: Text(i < _pin.length ? '●' : '', style: const TextStyle(color: Colors.white, fontSize: 24))),
+            )),
+          ),
+          const Spacer(),
+          // Numpad
+          Container(
+            color: Colors.white10,
+            child: GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 3,
+              childAspectRatio: 2,
+              physics: const NeverScrollableScrollPhysics(),
               children: [
-                _OtpBox(),
-                _OtpBox(),
-                _OtpBox(),
-                _OtpBox(),
+                ...List.generate(9, (i) => TextButton(
+                  onPressed: () => _tap('${i + 1}'),
+                  child: Text('${i + 1}', style: const TextStyle(fontSize: 24, color: Colors.white)),
+                )),
+                const SizedBox.shrink(),
+                TextButton(onPressed: () => _tap('0'), child: const Text('0', style: TextStyle(fontSize: 24, color: Colors.white))),
+                TextButton(onPressed: _delete, child: const Icon(Icons.backspace, color: Colors.white54)),
               ],
             ),
-            const Spacer(),
-            // Mock keyboard
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.grey.shade100,
-              child: GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 3,
-                childAspectRatio: 2,
-                children: List.generate(9, (index) {
-                  return TextButton(
-                    onPressed: () => _handlePinEntry(context),
-                    child: Text('${index + 1}', style: const TextStyle(fontSize: 24, color: Colors.black)),
-                  );
-                })..addAll([
-                  const SizedBox.shrink(),
-                  TextButton(
-                    onPressed: () => _handlePinEntry(context),
-                    child: const Text('0', style: TextStyle(fontSize: 24, color: Colors.black)),
-                  ),
-                  const SizedBox.shrink(),
-                ]),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+        ],
       ),
-    );
-  }
-
-  void _handlePinEntry(BuildContext context) {
-    if (ModalRoute.of(context)?.isCurrent != true) return;
-
-    // Immediate consequences
-    context.read<GameController>().completeCurrentTask(-20);
-    NotificationOverlay.show(context, 'Never share your OTP! Points lost.', isError: true);
-  }
-}
-
-class _OtpBox extends StatelessWidget {
-  const _OtpBox();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 50,
-      height: 60,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      alignment: Alignment.center,
-      child: const Text('X', style: TextStyle(fontSize: 24, color: Colors.black54)),
     );
   }
 }
