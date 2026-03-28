@@ -143,8 +143,8 @@ class SummaryScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Kul Reward Points 🏆', style: Theme.of(context).textTheme.headlineSmall),
-                Text('${controller.rewardPoints}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.turmeric)),
+                Text('Aaj Ke Kul Reward 🏆', style: Theme.of(context).textTheme.headlineSmall),
+                Text('${summary.totalRewardDelta}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.turmeric)),
               ],
             ),
           ),

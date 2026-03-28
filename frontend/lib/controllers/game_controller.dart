@@ -385,13 +385,20 @@ class GameController extends ChangeNotifier {
 
     _saveCurrentUser();
     
-    // Clear summary
+    // Clear summary from storage
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('pending_summary_$userId');
     
-    // Go back to select screen or start day for tomorrow
-    currentUser = null; 
-    currentPhase = GamePhase.userSelect;
+    // RESET DAY FOR NEXT LOOP
+    // We stay logged in as requested
+    todaySummary = DaySummary.forToday();
+    unallocated = 0;
+    gharBalance = 0;
+    dhandaBalance = 0;
+    dailyIncome = 0;
+    
+    currentPhase = GamePhase.startDay;
+    currentTabIndex = 0; // Back to Home
     notifyListeners();
   }
 
