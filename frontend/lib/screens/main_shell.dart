@@ -73,14 +73,16 @@ class _MainShellState extends State<MainShell> {
             ),
           ),
           const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Sakhya 🌿', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+              Image.asset('assets/images/sakhya_logo.png', height: 24, fit: BoxFit.contain),
               if (controller.currentUser != null)
                 Text(
                   'Namaste, ${controller.currentUser!.name.split(' ').first}!',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
             ],
           ),

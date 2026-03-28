@@ -368,16 +368,19 @@ class GameController extends ChangeNotifier {
 
     // Apply streak
     final today = _todayStr();
-    final lastDate = currentUser!.lastCompletedDate;
-    if (lastDate != today) {
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2,'0')}-${yesterday.day.toString().padLeft(2,'0')}';
-      if (lastDate == yStr) {
-        currentUser!.streakDays++;
-      } else {
-        currentUser!.streakDays = 1;
+    final user = currentUser;
+    if (user != null) {
+      final lastDate = user.lastCompletedDate;
+      if (lastDate != today) {
+        final yesterday = DateTime.now().subtract(const Duration(days: 1));
+        final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+        if (lastDate == yStr) {
+          user.streakDays++;
+        } else {
+          user.streakDays = 1;
+        }
+        user.lastCompletedDate = today;
       }
-      currentUser!.lastCompletedDate = today;
     }
 
     _saveCurrentUser();
@@ -392,14 +395,14 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ──────────────────────────────────────────────────────────
-  // Learning
-  // ──────────────────────────────────────────────────────────
   void completeLesson(int lessonId, {required bool correct, required bool usedHint}) {
     _checkAndResetDayIfNeeded();
-    todaySummary!.lessonsAttempted++;
+    final summary = todaySummary;
+    if (summary == null) return;
+
+    summary.lessonsAttempted++;
     if (correct) {
-      todaySummary!.lessonsCorrect++;
+      summary.lessonsCorrect++;
       _addReward(1, category: 'learning');
       if (!usedHint) _addReward(1, category: 'learning'); // bonus
     } else {
