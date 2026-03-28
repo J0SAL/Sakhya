@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
 import 'scam_guard_simulator.dart';
+import 'upi_practice_screen.dart';
 
 class Store1Screen extends StatelessWidget {
   const Store1Screen({super.key});
@@ -116,7 +117,7 @@ class Store1Screen extends StatelessWidget {
               side: const BorderSide(color: AppColors.divider),
               minimumSize: const Size(0, 52),
             ),
-            child: const Text('Khareedna Khatam'),
+            child: Text(dhanda > 10 ? 'Bachat Karein (Finish)' : 'Khareedna Khatam'),
           ),
         ],
       ),
@@ -124,11 +125,18 @@ class Store1Screen extends StatelessWidget {
   }
 
   void _checkout(BuildContext context, GameController controller) {
-    final success = controller.checkout();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(success ? '✅ Khareedari safal! +1 sikka mila' : '❌ Paisa kam pada! -1 sikka'),
-      backgroundColor: success ? AppColors.successGreen : AppColors.errorRed,
-    ));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UPIPracticeScreen(
+          amount: controller.cartTotal,
+          recipient: 'Local Wholesaler',
+          onSuccess: () {
+            controller.checkout();
+          },
+        ),
+      ),
+    );
   }
 
   void _doneShoppingWithScam(BuildContext context, GameController controller) {

@@ -148,6 +148,39 @@ class SummaryScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 32),
+          
+          // Finish Day Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                controller.finalizeDayAndSleep();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.leafGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 4,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Text('🌙', style: TextStyle(fontSize: 24)),
+                   SizedBox(width: 12),
+                   Text('Sona Jaiye (End Day)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              'Aaj ki bachat aur rewards 12 baje update honge.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ),
         ],
       ),
     );

@@ -21,16 +21,14 @@ class _NewUserFlowScreenState extends State<NewUserFlowScreen> {
   String _selectedOccupation = 'Tailoring';
   final _goalCtrl = TextEditingController(text: '5000');
   int _familySize = 4;
-  String _location = 'Fetching location...';
+  String _location = 'Rajasthan, India';
 
   final _occupations = ['Tailoring', 'Farming', 'Shopkeeper', 'Domestic Worker', 'Other'];
+  final _locations = ['Rajasthan, India', 'Madhya Pradesh, India', 'Uttar Pradesh, India'];
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) setState(() => _location = 'Rajasthan, India');
-    });
   }
 
   @override
@@ -267,22 +265,36 @@ class _NewUserFlowScreenState extends State<NewUserFlowScreen> {
           const SizedBox(height: 20),
           // Location
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: AppTheme.warmCard(),
             child: Row(
               children: [
                 const Icon(Icons.location_on, color: AppColors.kumkum, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Sthaan', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
-                      Text(_location, style: Theme.of(context).textTheme.headlineSmall),
-                    ],
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _location,
+                      isExpanded: true,
+                      borderRadius: BorderRadius.circular(16),
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _location = val);
+                      },
+                      items: _locations.map((loc) => DropdownMenuItem(
+                        value: loc,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Sthaan', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary, fontSize: 11)),
+                            Text(loc, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      )).toList(),
+                    ),
                   ),
                 ),
-                if (_location == 'Fetching location...') const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
               ],
             ),
           ),

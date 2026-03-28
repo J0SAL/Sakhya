@@ -14,6 +14,7 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   bool _editing = false;
+  late TextEditingController _nameCtrl;
   late TextEditingController _goalCtrl;
   late TextEditingController _incomeMinCtrl;
   late TextEditingController _incomeMaxCtrl;
@@ -22,6 +23,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   void initState() {
     super.initState();
     final user = context.read<GameController>().currentUser;
+    _nameCtrl = TextEditingController(text: '${user?.name ?? ''}');
     _goalCtrl = TextEditingController(text: '${user?.monthlyGoal ?? 5000}');
     _incomeMinCtrl = TextEditingController(text: '${user?.dailyIncomeMin ?? 300}');
     _incomeMaxCtrl = TextEditingController(text: '${user?.dailyIncomeMax ?? 700}');
@@ -29,6 +31,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _goalCtrl.dispose();
     _incomeMinCtrl.dispose();
     _incomeMaxCtrl.dispose();
@@ -39,7 +42,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
     final user = controller.currentUser;
-    if (user == null) return const SizedBox.shrink();
+    if (user == null) return const Scaffold(backgroundColor: AppColors.cream);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -78,7 +81,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Text(user.name, style: Theme.of(context).textTheme.headlineLarge),
+                  if (_editing)
+                    SizedBox(
+                      width: 250,
+                      child: TextField(
+                        controller: _nameCtrl,
+                        textAlign: TextAlign.center,
+                        textCapitalization: TextCapitalization.words,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8), border: UnderlineInputBorder()),
+                      ),
+                    )
+                  else
+                    Text(user.name, style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -182,6 +197,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 32),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+                icon: const Icon(Icons.logout, color: AppColors.errorRed),
+                label: const Text('Logout', style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            ),
           ],
         ),
       ),
@@ -202,6 +228,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   void _saveEdits(BuildContext context, UserProfile user) {
+    user.name = _nameCtrl.text.trim().isEmpty ? user.name : _nameCtrl.text.trim();
     user.monthlyGoal = int.tryParse(_goalCtrl.text) ?? user.monthlyGoal;
     user.dailyIncomeMin = int.tryParse(_incomeMinCtrl.text) ?? user.dailyIncomeMin;
     user.dailyIncomeMax = int.tryParse(_incomeMaxCtrl.text) ?? user.dailyIncomeMax;

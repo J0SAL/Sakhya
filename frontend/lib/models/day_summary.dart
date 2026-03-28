@@ -44,4 +44,42 @@ class DaySummary {
     final date = '${now.year}-${now.month.toString().padLeft(2,'0')}-${now.day.toString().padLeft(2,'0')}';
     return DaySummary(date: date, tasksCompleted: []);
   }
+
+  Map<String, dynamic> toJson() => {
+    'date': date,
+    'incomeEarned': incomeEarned,
+    'gharAllocation': gharAllocation,
+    'dhandaAllocation': dhandaAllocation,
+    'householdExpense': householdExpense,
+    'savings': savings,
+    'rewardDelta': rewardDelta,
+    'learningRewardDelta': learningRewardDelta,
+    'scamRewardDelta': scamRewardDelta,
+    'allocationCorrect': allocationCorrect,
+    'scamCompleted': scamCompleted,
+    'scamCorrect': scamCorrect,
+    'lessonsAttempted': lessonsAttempted,
+    'lessonsCorrect': lessonsCorrect,
+    'tasksCompleted': tasksCompleted,
+    'usedLaxmiDidiHelp': usedLaxmiDidiHelp,
+  };
+
+  factory DaySummary.fromJson(Map<String, dynamic> json) => DaySummary(
+    date: json['date'],
+    incomeEarned: json['incomeEarned'] ?? 0,
+    gharAllocation: json['gharAllocation'] ?? 0,
+    dhandaAllocation: json['dhandaAllocation'] ?? 0,
+    householdExpense: json['householdExpense'] ?? 0,
+    savings: json['savings'] ?? 0,
+    rewardDelta: json['rewardDelta'] ?? 0,
+    learningRewardDelta: json['learningRewardDelta'] ?? 0,
+    scamRewardDelta: json['scamRewardDelta'] ?? 0,
+    allocationCorrect: json['allocationCorrect'] ?? false,
+    scamCompleted: json['scamCompleted'] ?? false,
+    scamCorrect: json['scamCorrect'] ?? false,
+    lessonsAttempted: json['lessonsAttempted'] ?? 0,
+    lessonsCorrect: json['lessonsCorrect'] ?? 0,
+    tasksCompleted: List<String>.from(json['tasksCompleted'] ?? []),
+    usedLaxmiDidiHelp: json['usedLaxmiDidiHelp'] ?? false,
+  );
 }

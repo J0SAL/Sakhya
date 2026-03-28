@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_profile.dart';
@@ -44,6 +44,12 @@ class GameController extends ChangeNotifier {
 
   // ── Game Phase ───────────────────────────────────────────
   GamePhase currentPhase = GamePhase.userSelect;
+  int currentTabIndex = 0;
+
+  void setTabIndex(int index) {
+    currentTabIndex = index;
+    notifyListeners();
+  }
 
   // ── Day State ────────────────────────────────────────────
   int dailyIncome = 0;
@@ -99,13 +105,6 @@ class GameController extends ChangeNotifier {
     final raw = prefs.getStringList('sakhya_users') ?? [];
     allUsers = raw.map((s) => UserProfile.fromJson(jsonDecode(s))).toList();
 
-    // Check today's date for summary refresh
-    final today = _todayStr();
-    final savedDate = prefs.getString('sakhya_last_summary_date') ?? '';
-    if (savedDate != today) {
-      todaySummary = DaySummary.forToday();
-    }
-
     notifyListeners();
   }
 
@@ -135,6 +134,8 @@ class GameController extends ChangeNotifier {
   void selectUser(UserProfile user) {
     currentUser = user;
     rewardPoints = user.lifetimeRewardPoints;
+    _checkAndFlushStaleSummary();
+    _loadSummary();
     _refreshLessonsFromUser();
     _checkAndResetDayIfNeeded();
     currentPhase = GamePhase.startDay;
@@ -154,6 +155,7 @@ class GameController extends ChangeNotifier {
     todaySummary ??= DaySummary.forToday();
     if (todaySummary!.date != _todayStr()) {
       todaySummary = DaySummary.forToday();
+      _saveSummary();
     }
   }
 
@@ -162,8 +164,13 @@ class GameController extends ChangeNotifier {
     await _saveUsers();
     currentUser = profile;
     rewardPoints = 0;
+    _checkAndFlushStaleSummary();
     _refreshLessonsFromUser();
-    todaySummary = DaySummary.forToday();
+    _loadSummary();
+    if (todaySummary == null || todaySummary!.date != _todayStr()) {
+      todaySummary = DaySummary.forToday();
+      _saveSummary();
+    }
     currentPhase = GamePhase.startDay;
     notifyListeners();
   }
@@ -207,6 +214,7 @@ class GameController extends ChangeNotifier {
 
     todaySummary ??= DaySummary.forToday();
     todaySummary!.incomeEarned = dailyIncome;
+    _saveSummary();
 
     currentPhase = GamePhase.allocation;
     notifyListeners();
@@ -255,6 +263,7 @@ class GameController extends ChangeNotifier {
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '❌ Allocation'];
     }
 
+    _saveSummary();
     currentPhase = GamePhase.store1;
     notifyListeners();
   }
@@ -280,10 +289,12 @@ class GameController extends ChangeNotifier {
         item.quantity = 0;
       }
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '✅ Supplies Bought'];
+      _saveSummary();
       notifyListeners();
       return true;
     } else {
       _addReward(-1, category: 'game');
+      _saveSummary();
       notifyListeners();
       return false;
     }
@@ -298,6 +309,7 @@ class GameController extends ChangeNotifier {
 
   // Scam Dojo
   void resolveScam({required bool rejected, bool usedHint = false}) {
+    _checkAndResetDayIfNeeded();
     scamResolvedToday = true;
     todaySummary!.scamCompleted = true;
     if (rejected) {
@@ -309,6 +321,7 @@ class GameController extends ChangeNotifier {
       todaySummary!.scamCorrect = false;
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '❌ Scam OTP Entered'];
     }
+    _saveSummary();
     pendingScamEvent = false;
     notifyListeners();
   }
@@ -316,6 +329,11 @@ class GameController extends ChangeNotifier {
   // End of Day
   void completeEndOfDay() {
     if (currentUser == null) return;
+    if (currentPhase == GamePhase.daySummary) {
+      notifyListeners();
+      return; 
+    }
+
     final rng = Random();
     // Deduct random household expense from Ghar range
     final expMin = currentUser!.dailyExpenseMin;
@@ -329,15 +347,32 @@ class GameController extends ChangeNotifier {
     todaySummary!.householdExpense = actualExpense;
     todaySummary!.savings = savings;
 
-    // Add savings to user profile
-    currentUser!.totalSavings += savings;
+    currentUser!.lifetimeRewardPoints = rewardPoints;
+    _saveSummary();
 
-    // Update streak
+    currentPhase = GamePhase.daySummary;
+    currentTabIndex = 3; // Switch to Summary tab
+    notifyListeners();
+  }
+
+  Future<void> finalizeDayAndSleep() async {
+    if (currentUser == null || todaySummary == null) return;
+    final userId = currentUser!.id;
+
+    // Apply deferred points
+    rewardPoints += todaySummary!.totalRewardDelta;
+    currentUser!.lifetimeRewardPoints = rewardPoints;
+
+    // Apply deferred savings
+    currentUser!.totalSavings += todaySummary!.savings;
+
+    // Apply streak
     final today = _todayStr();
-    if (currentUser!.lastCompletedDate != today) {
+    final lastDate = currentUser!.lastCompletedDate;
+    if (lastDate != today) {
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
       final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2,'0')}-${yesterday.day.toString().padLeft(2,'0')}';
-      if (currentUser!.lastCompletedDate == yStr) {
+      if (lastDate == yStr) {
         currentUser!.streakDays++;
       } else {
         currentUser!.streakDays = 1;
@@ -345,10 +380,15 @@ class GameController extends ChangeNotifier {
       currentUser!.lastCompletedDate = today;
     }
 
-    currentUser!.lifetimeRewardPoints = rewardPoints;
     _saveCurrentUser();
-
-    currentPhase = GamePhase.daySummary;
+    
+    // Clear summary
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('pending_summary_$userId');
+    
+    // Go back to select screen or start day for tomorrow
+    currentUser = null; 
+    currentPhase = GamePhase.userSelect;
     notifyListeners();
   }
 
@@ -356,6 +396,7 @@ class GameController extends ChangeNotifier {
   // Learning
   // ──────────────────────────────────────────────────────────
   void completeLesson(int lessonId, {required bool correct, required bool usedHint}) {
+    _checkAndResetDayIfNeeded();
     todaySummary!.lessonsAttempted++;
     if (correct) {
       todaySummary!.lessonsCorrect++;
@@ -371,9 +412,23 @@ class GameController extends ChangeNotifier {
       if (idx + 1 < lessons.length) {
         lessons[idx + 1].isUnlocked = true;
       }
-      currentUser?.lessonsCompleted = idx + 1;
+      final currentMax = currentUser?.lessonsCompleted ?? 0;
+      if (idx + 1 > currentMax) {
+        currentUser?.lessonsCompleted = idx + 1;
+      }
       _saveCurrentUser();
+      _saveSummary();
     }
+    notifyListeners();
+  }
+
+  Future<void> wipeAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    allUsers.clear();
+    currentUser = null;
+    todaySummary = DaySummary.forToday();
+    currentPhase = GamePhase.userSelect;
     notifyListeners();
   }
 
@@ -397,7 +452,6 @@ class GameController extends ChangeNotifier {
   // Helpers
   // ──────────────────────────────────────────────────────────
   void _addReward(int delta, {required String category}) {
-    rewardPoints = (rewardPoints + delta).clamp(0, 99999);
     switch (category) {
       case 'game': todaySummary?.rewardDelta += delta; break;
       case 'learning': todaySummary?.learningRewardDelta += delta; break;
@@ -405,8 +459,112 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  void _checkAndFlushStaleSummary() async {
+    final prefs = await SharedPreferences.getInstance();
+    final summaryJson = prefs.getString('pending_summary_${currentUser?.id}');
+    if (summaryJson != null) {
+      try {
+        final summary = DaySummary.fromJson(jsonDecode(summaryJson));
+        if (summary.date != _todayStr()) {
+           // It's from a previous day! Flush it.
+           rewardPoints += summary.totalRewardDelta;
+           currentUser!.lifetimeRewardPoints = rewardPoints;
+           currentUser!.totalSavings += summary.savings;
+
+           // Streak logic
+           final yesterday = DateTime.now().subtract(const Duration(days: 1));
+           final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2,'0')}-${yesterday.day.toString().padLeft(2,'0')}';
+           if (currentUser!.lastCompletedDate == yStr) {
+             currentUser!.streakDays++;
+           } else if (summary.date == yStr) {
+             currentUser!.streakDays = 1;
+           }
+           currentUser!.lastCompletedDate = summary.date;
+           
+           _saveCurrentUser();
+           await prefs.remove('pending_summary_${currentUser?.id}');
+        }
+      } catch (e) {
+        debugPrint('Error flushing summary: $e');
+      }
+    }
+  }
+
+  void _saveSummary() async {
+    if (currentUser == null || todaySummary == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('pending_summary_${currentUser!.id}', jsonEncode(todaySummary!.toJson()));
+  }
+
+  void _loadSummary() async {
+    if (currentUser == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final summaryJson = prefs.getString('pending_summary_${currentUser!.id}');
+    if (summaryJson != null) {
+      try {
+        final summary = DaySummary.fromJson(jsonDecode(summaryJson));
+        if (summary.date == _todayStr()) {
+          todaySummary = summary;
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Error loading summary: $e');
+      }
+    }
+  }
+
   // Direct navigation helpers
+  void goToStore() {
+    currentTabIndex = 0; // Home tab
+    currentPhase = GamePhase.store1;
+    notifyListeners();
+  }
+
   void goToStartDay() {
+    currentTabIndex = 0; // Home tab
+    currentPhase = GamePhase.startDay;
+    notifyListeners();
+  }
+
+  void logout() {
+    currentUser = null;
+    currentPhase = GamePhase.userSelect;
+    currentTabIndex = 0;
+    notifyListeners();
+  }
+
+  void developmentResetToday() {
+    if (currentUser != null && todaySummary != null) {
+      currentUser!.lastCompletedDate = '';
+      
+      if (currentPhase == GamePhase.daySummary) {
+        currentUser!.totalSavings = (currentUser!.totalSavings - todaySummary!.savings).clamp(0, 999999);
+        if (currentUser!.streakDays > 0) {
+          currentUser!.streakDays--;
+        }
+      }
+
+      final earnedToday = todaySummary!.rewardDelta + todaySummary!.learningRewardDelta + todaySummary!.scamRewardDelta;
+      rewardPoints = (rewardPoints - earnedToday).clamp(0, 999999);
+      currentUser!.lifetimeRewardPoints = rewardPoints;
+
+      if (todaySummary!.lessonsCorrect > 0) {
+        currentUser!.lessonsCompleted = (currentUser!.lessonsCompleted - todaySummary!.lessonsCorrect).clamp(0, lessons.length);
+      }
+
+      _saveCurrentUser();
+    }
+    
+    _refreshLessonsFromUser();
+
+    gharBalance = 0;
+    dhandaBalance = 0;
+    unallocated = 0;
+    dailyIncome = 0;
+
+    todaySummary = DaySummary.forToday();
+    _saveSummary();
+    scamResolvedToday = false;
     currentPhase = GamePhase.startDay;
     notifyListeners();
   }

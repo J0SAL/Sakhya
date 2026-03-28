@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
+import 'scam_guard_simulator.dart';
 
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
@@ -33,13 +34,30 @@ class HomeDashboardScreen extends StatelessWidget {
             children: [
               Expanded(child: _buildStatMini(context, '🏠 Ghar', '₹${controller.gharBalance}', AppColors.leafGreen)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatMini(context, '🪡 Dhanda', '₹${controller.dhandaBalance}', AppColors.turmeric)),
+              Expanded(
+                child: _buildStatMini(
+                  context, 
+                  '🪡 Dhanda', 
+                  '₹${controller.dhandaBalance}', 
+                  AppColors.turmeric,
+                  onTap: controller.dhandaBalance > 0 ? () => controller.goToStore() : null,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Scam Dojo schedule ghost button (for demo)
-          _buildScamScheduleButton(context),
+          // Scam Dojo schedule & Dev Reset ghost buttons (for demo)
+          const SizedBox(height: 120),
+          Center(
+            child: Column(
+              children: [
+                _buildScamScheduleButton(context),
+                _buildDevResetButton(context),
+                _buildNukeDataButton(context),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -134,50 +152,99 @@ class HomeDashboardScreen extends StatelessWidget {
             Text('Kamai: ₹${summary.incomeEarned}', style: Theme.of(context).textTheme.bodyLarge),
             Text('Bachat: ₹${summary.savings}', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.leafGreen, fontWeight: FontWeight.w700)),
           ],
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () => context.read<GameController>().goToStartDay(),
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.leafGreen, side: const BorderSide(color: AppColors.leafGreen)),
-            child: const Text('Kal ke liye taiyar rahein'),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => context.read<GameController>().completeEndOfDay(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.leafGreen,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: const Text('Aaj ka summary dekhein 📊', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatMini(BuildContext context, String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withAlpha(60)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 6),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 22)),
-        ],
+  Widget _buildStatMini(BuildContext context, String label, String value, Color color, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withAlpha(onTap != null ? 120 : 60), width: onTap != null ? 2 : 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+                if (onTap != null) Icon(Icons.shopping_cart, color: color.withAlpha(150), size: 14),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 22)),
+            if (onTap != null) ...[
+              const SizedBox(height: 4),
+              Text('Wapas Shop ➔', style: TextStyle(color: color.withAlpha(180), fontSize: 10, fontWeight: FontWeight.w600)),
+            ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildScamScheduleButton(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Scam Dojo call scheduled for demo 📞'), backgroundColor: AppColors.maatiBrown),
-          );
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.textSecondary.withAlpha(60),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        ),
-        child: const Text('Schedule Scam Dojo Demo', style: TextStyle(fontSize: 12)),
+    return TextButton(
+      onPressed: () {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => ChangeNotifierProvider.value(
+            value: context.read<GameController>(),
+            child: const ScamGuardDialog(),
+          ),
+        );
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.textSecondary.withAlpha(60),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       ),
+      child: const Text('Schedule Scam Dojo Demo', style: TextStyle(fontSize: 12)),
+    );
+  }
+
+  Widget _buildDevResetButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        context.read<GameController>().developmentResetToday();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sakhya reset for today 🔄'), backgroundColor: AppColors.leafGreen),
+        );
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.textSecondary.withAlpha(60),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      ),
+      child: const Text('Reset Today (Dev)', style: TextStyle(fontSize: 12)),
+    );
+  }
+
+  Widget _buildNukeDataButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        context.read<GameController>().wipeAllData();
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.errorRed.withAlpha(150),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      ),
+      child: const Text('Nuke App Data 🧨', style: TextStyle(fontSize: 12)),
     );
   }
 }

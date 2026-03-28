@@ -40,11 +40,7 @@ class AppRouter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final phase = context.watch<GameController>().currentPhase;
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: _routeForPhase(phase),
-    );
+    return _routeForPhase(phase);
   }
 
   Widget _routeForPhase(GamePhase phase) {

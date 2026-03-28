@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
 
 class UPIPracticeScreen extends StatefulWidget {
-  const UPIPracticeScreen({super.key});
+  final VoidCallback? onSuccess;
+  final int amount;
+  final String recipient;
+  
+  const UPIPracticeScreen({
+    super.key, 
+    this.onSuccess, 
+    this.amount = 0, 
+    this.recipient = 'Local Wholesaler'
+  });
 
   @override
   State<UPIPracticeScreen> createState() => _UPIPracticeScreenState();
@@ -25,11 +32,22 @@ class _UPIPracticeScreenState extends State<UPIPracticeScreen> {
     setState(() => _isProcessing = true);
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
-    setState(() { _isProcessing = false; _isSuccess = true; });
-    // In new flow, UPI is part of Store-1 checkout — just a UI demo here
+    
+    setState(() { 
+      _isProcessing = false; 
+      _isSuccess = true; 
+    });
+
+    if (widget.onSuccess != null) {
+      widget.onSuccess!();
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('🔊 "Ek sau rupaye prapt hue" +1 sikka!'), backgroundColor: AppColors.successGreen),
+      const SnackBar(content: Text('🔊 "Payment Saphal (Success)! sikka mil gaya"'), backgroundColor: AppColors.successGreen),
     );
+
+    await Future.delayed(const Duration(milliseconds: 2000));
+    if (mounted) Navigator.pop(context);
   }
 
   void _handleDelete() {
@@ -61,9 +79,9 @@ class _UPIPracticeScreenState extends State<UPIPracticeScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text('Payment To: Local Wholesaler', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+          Text('Payment To: ${widget.recipient}', style: const TextStyle(fontSize: 16, color: AppColors.textSecondary)),
           const SizedBox(height: 6),
-          Text('₹${context.watch<GameController>().cartTotal > 0 ? context.watch<GameController>().cartTotal : 100}', style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          Text('₹${widget.amount}', style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
           const SizedBox(height: 20),
           if (_isProcessing) const CircularProgressIndicator(color: AppColors.leafGreen)
           else if (_isSuccess) const Icon(Icons.check_circle, color: AppColors.successGreen, size: 64)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
+import 'otp_pin_pad_screen.dart';
 
 /// Shown as a dialog overlay during store/home phases
 class ScamGuardDialog extends StatefulWidget {
@@ -23,25 +24,34 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
     });
   }
 
-  void _answer(BuildContext context) {
-    // Show OTP pad inline
+  void _answer(BuildContext context) async {
+    // Show OTP pad
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const OtpPinPadScreen()));
+    if (!mounted) return;
     context.read<GameController>().resolveScam(rejected: false);
     setState(() => _resolved = true);
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 3), () {
       if (context.mounted) Navigator.of(context).pop();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final correct = context.read<GameController>().todaySummary?.scamCorrect ?? false;
+    Color borderColor = AppColors.kumkum;
+    if (_resolved) {
+      borderColor = correct ? AppColors.successGreen : AppColors.errorRed;
+    }
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(20),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
           color: const Color(0xFF1A0A00),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppColors.kumkum, width: 2),
+          border: Border.all(color: borderColor, width: 2),
         ),
         padding: const EdgeInsets.all(24),
         child: _resolved ? _buildResult() : _buildScamCall(context),

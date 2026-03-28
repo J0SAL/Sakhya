@@ -18,7 +18,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _currentIndex = 0;
+  int get _currentIndex => context.watch<GameController>().currentTabIndex;
 
   final _pages = const [
     HomeDashboardScreen(),
@@ -51,7 +51,12 @@ class _MainShellState extends State<MainShell> {
         children: [
           // Profile avatar
           GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
+            onTap: () async {
+              final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen()));
+              if (result == true && context.mounted) {
+                context.read<GameController>().logout();
+              }
+            },
             child: Container(
               width: 42, height: 42,
               decoration: BoxDecoration(
@@ -151,14 +156,14 @@ class _MainShellState extends State<MainShell> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _NavItem(icon: Icons.home_rounded, label: 'Ghar', index: 0, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-              _NavItem(icon: Icons.menu_book_rounded, label: 'Seekhein', index: 1, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-              _NavItem(icon: Icons.support_agent, label: 'Laxmi Didi', index: 2, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
+              _NavItem(icon: Icons.home_rounded, label: 'Ghar', index: 0, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
+              _NavItem(icon: Icons.menu_book_rounded, label: 'Seekhein', index: 1, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
+              _NavItem(icon: Icons.support_agent, label: 'Laxmi Didi', index: 2, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
               _NavItem(
                 label: 'Aaj Ka Haal',
                 index: 3,
                 currentIndex: _currentIndex,
-                onTap: (i) => setState(() => _currentIndex = i),
+                onTap: (i) => controller.setTabIndex(i),
                 icon: Icons.bar_chart_rounded,
                 badge: controller.todaySummary?.hasActivity == true ? '✓' : null,
               ),
