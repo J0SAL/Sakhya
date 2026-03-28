@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_strings.dart';
 
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
@@ -10,9 +11,10 @@ class SummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
     final summary = controller.todaySummary;
+    final strings = AppStrings.of(context);
 
     if (summary == null || !summary.hasActivity) {
-      return _buildEmptyState(context, controller);
+      return _buildEmptyState(context, strings);
     }
 
     return SingleChildScrollView(
@@ -34,7 +36,7 @@ class SummaryScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Aaj Ka Haal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text(strings.summaryHeader, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20)),
                     Text(summary.date, style: const TextStyle(color: Colors.white70, fontSize: 13)),
                   ],
                 ),
@@ -61,15 +63,16 @@ class SummaryScreen extends StatelessWidget {
           // Game stats card
           _SummaryCard(
             emoji: '💰',
-            title: 'Game Stats',
+            title: strings.gameStats,
             points: summary.rewardDelta,
             children: [
-              _StatRow('Kamai', '₹${summary.incomeEarned}', AppColors.leafGreen),
-              _StatRow('Ghar Baant', '₹${summary.gharAllocation}', AppColors.leafGreen),
-              _StatRow('Dhanda Baant', '₹${summary.dhandaAllocation}', AppColors.turmeric),
-              _StatRow('Ghar Kharcha', '₹${summary.householdExpense}', AppColors.kumkum),
-              _StatRow('Aaj Ki Bachat 🌟', '₹${summary.savings}', AppColors.successGreen, large: true),
-              _StatRow('Allocation', summary.allocationCorrect ? '✅ Sahi' : '❌ Galat', summary.allocationCorrect ? AppColors.successGreen : AppColors.errorRed),
+              _StatRow(strings.kamai, '₹${summary.incomeEarned}', AppColors.leafGreen),
+              _StatRow(strings.gharAlloc, '₹${summary.gharAllocation}', AppColors.leafGreen),
+              _StatRow(strings.dhandaAlloc, '₹${summary.dhandaAllocation}', AppColors.turmeric),
+              _StatRow(strings.gharKharcha, '₹${summary.householdExpense}', AppColors.kumkum),
+              _StatRow(strings.aajKiBachat, '₹${summary.savings}', AppColors.successGreen, large: true),
+              _StatRow(strings.allocation, summary.allocationCorrect ? strings.allocationCorrect : strings.allocationWrong,
+                  summary.allocationCorrect ? AppColors.successGreen : AppColors.errorRed),
             ],
           ),
 
@@ -78,14 +81,14 @@ class SummaryScreen extends StatelessWidget {
           // Learning card
           _SummaryCard(
             emoji: '📚',
-            title: 'Seekhna (Learning)',
+            title: strings.learningTitle,
             points: summary.learningRewardDelta,
             children: summary.lessonsAttempted == 0
-                ? [const _StatRow('Koi lesson nahi', '—', AppColors.textSecondary)]
+                ? [_StatRow(strings.noLesson, '—', AppColors.textSecondary)]
                 : [
-                    _StatRow('Lessons try kiye', '${summary.lessonsAttempted}', AppColors.leafGreen),
-                    _StatRow('Sahi jawab', '${summary.lessonsCorrect}', AppColors.successGreen),
-                    _StatRow('Galat jawab', '${summary.lessonsAttempted - summary.lessonsCorrect}', AppColors.errorRed),
+                    _StatRow(strings.lessonsTriedLabel, '${summary.lessonsAttempted}', AppColors.leafGreen),
+                    _StatRow(strings.correctAnswers, '${summary.lessonsCorrect}', AppColors.successGreen),
+                    _StatRow(strings.wrongAnswers, '${summary.lessonsAttempted - summary.lessonsCorrect}', AppColors.errorRed),
                   ],
           ),
 
@@ -94,13 +97,14 @@ class SummaryScreen extends StatelessWidget {
           // Scam card
           _SummaryCard(
             emoji: '📞',
-            title: 'Scam Dojo',
+            title: strings.scamDojo,
             points: summary.scamRewardDelta,
             children: !summary.scamCompleted
-                ? [const _StatRow('Aaj scam event nahi aaya', '—', AppColors.textSecondary)]
+                ? [_StatRow(strings.noScamToday, '—', AppColors.textSecondary)]
                 : [
-                    _StatRow('Scam call', summary.scamCorrect ? '✅ Reject kiya!' : '❌ OTP de diya', summary.scamCorrect ? AppColors.successGreen : AppColors.errorRed),
-                    if (summary.usedLaxmiDidiHelp) const _StatRow('Laxmi Didi madad li', '✓', AppColors.turmeric),
+                    _StatRow('Scam call', summary.scamCorrect ? strings.scamRejected : strings.scamOtpGiven,
+                        summary.scamCorrect ? AppColors.successGreen : AppColors.errorRed),
+                    if (summary.usedLaxmiDidiHelp) _StatRow(strings.laxmiHelp, '✓', AppColors.turmeric),
                   ],
           ),
 
@@ -114,11 +118,11 @@ class SummaryScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Text('✅', style: TextStyle(fontSize: 20)),
-                      SizedBox(width: 8),
-                      Text('Kaam Jo Hue', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                      const Text('✅', style: TextStyle(fontSize: 20)),
+                      const SizedBox(width: 8),
+                      Text(strings.tasksTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -143,20 +147,18 @@ class SummaryScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Aaj Ke Kul Reward 🏆', style: Theme.of(context).textTheme.headlineSmall),
+                Text(strings.totalReward, style: Theme.of(context).textTheme.headlineSmall),
                 Text('${summary.totalRewardDelta}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.turmeric)),
               ],
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Finish Day Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                controller.finalizeDayAndSleep();
-              },
+              onPressed: () => controller.finalizeDayAndSleep(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.leafGreen,
                 foregroundColor: Colors.white,
@@ -164,21 +166,15 @@ class SummaryScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 4,
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                   Text('🌙', style: TextStyle(fontSize: 24)),
-                   SizedBox(width: 12),
-                   Text('Sona Jaiye (End Day)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                ],
-              ),
+              child: Text(strings.endDayButton, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             ),
           ),
           const SizedBox(height: 12),
-          const Center(
+          Center(
             child: Text(
-              'Aaj ki bachat aur rewards 12 baje update honge.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              strings.endDayNote,
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              textAlign: TextAlign.center,
             ),
           ),
         ],
@@ -186,7 +182,7 @@ class SummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, GameController controller) {
+  Widget _buildEmptyState(BuildContext context, AppStrings strings) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -195,10 +191,10 @@ class SummaryScreen extends StatelessWidget {
           children: [
             const Text('🌸', style: TextStyle(fontSize: 72)),
             const SizedBox(height: 20),
-            Text('Aaj ka haal khaali hai', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.textSecondary)),
+            Text(strings.emptyStatTitle, style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             Text(
-              'Khel shuru karein ya koi lesson seekhein — sab yahan dikhega!',
+              strings.emptyStatSub,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),

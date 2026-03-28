@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../models/user_profile.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_strings.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -42,17 +43,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
     final user = controller.currentUser;
+    final s = AppStrings.of(context);
     if (user == null) return const Scaffold(backgroundColor: AppColors.cream);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text('Mera Profile'),
+        title: Text(s.profileTitle),
         actions: [
           IconButton(
             icon: Icon(_editing ? Icons.check : Icons.edit),
             onPressed: () {
-              if (_editing) _saveEdits(context, user);
+              if (_editing) _saveEdits(context, user, s);
               setState(() => _editing = !_editing);
             },
           ),
@@ -98,7 +100,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                     decoration: BoxDecoration(color: AppColors.lightCream, borderRadius: BorderRadius.circular(20)),
-                    child: Text('${_emojiForOcc(user.occupation)} ${user.occupation}', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary)),
+                    child: Text('${_emojiForOcc(user.occupation)} ${user.occupation}',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary)),
                   ),
                   const SizedBox(height: 4),
                   Text('📍 ${user.location}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
@@ -117,7 +120,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Mahiney Ka Lakshya 🎯', style: Theme.of(context).textTheme.headlineSmall),
+                      Text(s.monthlyGoalLabel, style: Theme.of(context).textTheme.headlineSmall),
                       if (_editing)
                         SizedBox(
                           width: 100,
@@ -130,7 +133,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ),
                         )
                       else
-                        Text('₹${user.monthlyGoal}', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.leafGreen)),
+                        Text('₹${user.monthlyGoal}',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.leafGreen)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -147,8 +151,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('₹${user.totalSavings} bachat', style: const TextStyle(color: AppColors.leafGreen, fontWeight: FontWeight.w600)),
-                      Text('${(controller.monthlyGoalProgress * 100).toStringAsFixed(0)}% poora', style: const TextStyle(color: AppColors.textSecondary)),
+                      Text('₹${user.totalSavings} ${s.savingsLabel}',
+                          style: const TextStyle(color: AppColors.leafGreen, fontWeight: FontWeight.w600)),
+                      Text('${(controller.monthlyGoalProgress * 100).toStringAsFixed(0)}% ${s.completedLabel}',
+                          style: const TextStyle(color: AppColors.textSecondary)),
                     ],
                   ),
                 ],
@@ -163,18 +169,31 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Rojana Ki Kamai Range 💰', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(s.incomeRangeLabel, style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 12),
                   if (_editing)
                     Row(
                       children: [
-                        Expanded(child: TextField(controller: _incomeMinCtrl, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(labelText: 'Min ₹', prefixText: '₹'))),
+                        Expanded(child: TextField(
+                          controller: _incomeMinCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(labelText: 'Min ₹', prefixText: '₹'),
+                        )),
                         const SizedBox(width: 12),
-                        Expanded(child: TextField(controller: _incomeMaxCtrl, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(labelText: 'Max ₹', prefixText: '₹'))),
+                        Expanded(child: TextField(
+                          controller: _incomeMaxCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(labelText: 'Max ₹', prefixText: '₹'),
+                        )),
                       ],
                     )
                   else
-                    Text('₹${user.dailyIncomeMin} – ₹${user.dailyIncomeMax} per day', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.turmeric)),
+                    Text(
+                      '₹${user.dailyIncomeMin} – ₹${user.dailyIncomeMax} ${s.perDay}',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.turmeric),
+                    ),
                 ],
               ),
             ),
@@ -187,13 +206,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Stats 📊', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(s.statsLabel, style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 12),
-                  _statRow('🔥 Streak', '${user.streakDays} din'),
-                  _statRow('⭐ Total Points', '${user.lifetimeRewardPoints}'),
-                  _statRow('📚 Lessons Complete', '${user.lessonsCompleted}'),
-                  _statRow('💰 Total Bachat', '₹${user.totalSavings}'),
-                  _statRow('👨‍👩‍👧 Parivaar', '${user.familySize} log'),
+                  _statRow(s.streakLabel, '${user.streakDays} ${s.perDay}'),
+                  _statRow(s.totalPointsLabel, '${user.lifetimeRewardPoints}'),
+                  _statRow(s.lessonsCompleteLabel, '${user.lessonsCompleted}'),
+                  _statRow(s.totalSavingsLabel, '₹${user.totalSavings}'),
+                  _statRow(s.familyMembersLabel, '${user.familySize}'),
                 ],
               ),
             ),
@@ -201,9 +220,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
+                onPressed: () => Navigator.of(context).pop(true),
                 icon: const Icon(Icons.logout, color: AppColors.errorRed),
                 label: const Text('Logout', style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
@@ -227,13 +244,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  void _saveEdits(BuildContext context, UserProfile user) {
+  void _saveEdits(BuildContext context, UserProfile user, AppStrings s) {
     user.name = _nameCtrl.text.trim().isEmpty ? user.name : _nameCtrl.text.trim();
     user.monthlyGoal = int.tryParse(_goalCtrl.text) ?? user.monthlyGoal;
     user.dailyIncomeMin = int.tryParse(_incomeMinCtrl.text) ?? user.dailyIncomeMin;
     user.dailyIncomeMax = int.tryParse(_incomeMaxCtrl.text) ?? user.dailyIncomeMax;
-    context.read<GameController>().goToStartDay(); // triggers rebuild
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile save ho gaya ✅'), backgroundColor: AppColors.successGreen));
+    context.read<GameController>().goToStartDay();
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.profileSaved), backgroundColor: AppColors.successGreen));
   }
 
   String _emojiForOcc(String occ) {

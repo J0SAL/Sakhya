@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
+import '../services/tts_service.dart';
+import '../theme/app_strings.dart';
 import '../theme/app_theme.dart';
 
 class LaxmiQuizScreen extends StatelessWidget {
@@ -8,10 +10,23 @@ class LaxmiQuizScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final question = s.isHindi
+        ? 'क्या बैंक अधिकारी कभी फोन पर OTP माँगते हैं?'
+        : 'Do bank officials ever ask for OTP on the phone?';
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TtsService.instance.speakL(
+        isHindi: s.isHindi,
+        hindi: 'क्या बैंक अधिकारी कभी फोन पर OTP माँगते हैं?',
+        english: 'Do bank officials ever ask for OTP on the phone?',
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.lightCream,
       appBar: AppBar(
-        title: const Text('Laxmi Didi Quiz'),
+        title: Text(s.isHindi ? 'लक्ष्मी दीदी प्रश्न' : 'Laxmi Didi Quiz'),
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -26,10 +41,13 @@ class LaxmiQuizScreen extends StatelessWidget {
                 child: const Center(child: Text('👩', style: TextStyle(fontSize: 56))),
               ),
               const SizedBox(height: 32),
-              Text('Sawal (Question):', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                s.isHindi ? 'सवाल:' : 'Question:',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 8),
               Text(
-                'Kya bank officials kabhi aapse phone par OTP ki maang karte hain?',
+                question,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
@@ -38,20 +56,50 @@ class LaxmiQuizScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorRed, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.errorRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20)),
                     onPressed: () {
                       context.read<GameController>().completeLesson(0, correct: false, usedHint: false);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Galat! Bank kabhi OTP nahi mangta.'), backgroundColor: AppColors.errorRed));
+                      TtsService.instance.speakL(
+                        isHindi: s.isHindi,
+                        hindi: 'गलत! बैंक कभी OTP नहीं माँगता। -1 सिक्का।',
+                        english: 'Wrong! Banks never ask for OTP. -1 coin.',
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(s.isHindi
+                            ? 'गलत! बैंक कभी OTP नहीं माँगता।'
+                            : 'Wrong! Banks never ask for OTP.'),
+                        backgroundColor: AppColors.errorRed,
+                      ));
                     },
-                    child: const Text('Haan (Yes)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      s.isHindi ? 'हाँ (Yes)' : 'Yes',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                   ),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.successGreen, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.successGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20)),
                     onPressed: () {
                       context.read<GameController>().completeLesson(0, correct: true, usedHint: false);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sahi jawab! +1 sikka!'), backgroundColor: AppColors.successGreen));
+                      TtsService.instance.speakL(
+                        isHindi: s.isHindi,
+                        hindi: 'शाबाश! सही जवाब! +1 सिक्का मिला!',
+                        english: 'Well done! Correct answer! +1 coin earned!',
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(s.isHindi ? 'सही जवाब! +1 सिक्का!' : 'Correct! +1 coin!'),
+                        backgroundColor: AppColors.successGreen,
+                      ));
                     },
-                    child: const Text('Nahi (No)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      s.isHindi ? 'नहीं (No)' : 'No',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),

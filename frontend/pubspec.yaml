@@ -38,6 +38,16 @@ dependencies:
   google_fonts: ^6.2.1
   shared_preferences: ^2.3.2
 
+  # Offline-first local database
+  sqflite: ^2.3.3+1
+  path: ^1.9.1
+
+  # Text-to-Speech (works fully offline)
+  flutter_tts: ^4.2.0
+
+  # Speech-to-Text
+  speech_to_text: ^7.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'controllers/game_controller.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_strings.dart';
 import 'screens/user_select_screen.dart';
 import 'screens/new_user_flow_screen.dart';
 import 'screens/main_shell.dart';
@@ -10,10 +11,15 @@ import 'screens/allocation_screen.dart';
 import 'screens/store1_screen.dart';
 import 'screens/end_of_day_screen.dart';
 
+final LanguageController languageController = LanguageController();
+
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => GameController(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => GameController()),
+        ChangeNotifierProvider.value(value: languageController),
+      ],
       child: const SakhyaApp(),
     ),
   );
@@ -24,11 +30,16 @@ class SakhyaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sakhya',
-      theme: AppTheme.theme(),
-      home: const AppRouter(),
-      debugShowCheckedModeBanner: false,
+    // Rebuild MaterialApp when language changes to update title
+    context.watch<LanguageController>();
+    return LanguageControllerProvider(
+      controller: languageController,
+      child: MaterialApp(
+        title: 'Sakhya',
+        theme: AppTheme.theme(),
+        home: const AppRouter(),
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }
@@ -50,18 +61,18 @@ class AppRouter extends StatelessWidget {
       case GamePhase.newUserFlow:
         return const NewUserFlowScreen(key: ValueKey('newUser'));
       case GamePhase.startDay:
-        return const MainShell(key: ValueKey('shell_home'));
+      case GamePhase.daySummary:
+      case GamePhase.scamDojo:
+        // All phases that show the main shell share the same key so the
+        // widget is NOT rebuilt and the currentTabIndex in GameController
+        // is respected (e.g. navigating to Summary tab on daySummary).
+        return const MainShell(key: ValueKey('main_shell'));
       case GamePhase.allocation:
         return const AllocationScreen(key: ValueKey('allocation'));
       case GamePhase.store1:
         return const Store1Screen(key: ValueKey('store1'));
       case GamePhase.endOfDay:
         return const EndOfDayScreen(key: ValueKey('endOfDay'));
-      case GamePhase.daySummary:
-        return const MainShell(key: ValueKey('shell_summary'));
-      case GamePhase.scamDojo:
-        // Scam dojo is handled as a dialog overlay, never as a root screen
-        return const MainShell(key: ValueKey('shell_scam'));
     }
   }
 }

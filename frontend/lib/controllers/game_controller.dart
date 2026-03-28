@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_profile.dart';
 import '../models/day_summary.dart';
 import '../models/learning_lesson.dart';
+import '../services/database_helper.dart';
+import '../services/tts_service.dart';
 
 enum GamePhase {
   userSelect,
@@ -61,6 +63,10 @@ class GameController extends ChangeNotifier {
   int get suggestedGhar => dailyIncome > 0 ? ((dailyIncome * 0.6).round() ~/ 100) * 100 : 0;
   int get suggestedDhanda => dailyIncome > 0 ? dailyIncome - suggestedGhar : 0;
 
+  // Minimum required amounts
+  static const int minGhar = 100;    // minimum for household
+  static const int minDhanda = 150;  // minimum for business
+
   // Allocation hint usage
   bool usedHintThisAllocation = false;
 
@@ -98,29 +104,59 @@ class GameController extends ChangeNotifier {
   }
 
   // ──────────────────────────────────────────────────────────
-  // Persistence
+  // Persistence — SQLite (offline-first) with SharedPreferences fallback
   // ──────────────────────────────────────────────────────────
-  Future<void> _loadUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList('sakhya_users') ?? [];
-    allUsers = raw.map((s) => UserProfile.fromJson(jsonDecode(s))).toList();
 
+  Future<void> _loadUsers() async {
+    // 1. Try SQLite first
+    try {
+      final dbUsers = await DatabaseHelper.instance.loadUsers();
+      if (dbUsers.isNotEmpty) {
+        allUsers = dbUsers;
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      debugPrint('DB load users failed, falling back to prefs: $e');
+    }
+
+    // 2. Migrate from SharedPreferences if SQLite is empty
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getStringList('sakhya_users') ?? [];
+      if (raw.isNotEmpty) {
+        allUsers = raw.map((s) => UserProfile.fromJson(jsonDecode(s))).toList();
+        // Write migrated data to SQLite
+        await DatabaseHelper.instance.saveAllUsers(allUsers);
+      }
+    } catch (e) {
+      debugPrint('Prefs migration error: $e');
+    }
     notifyListeners();
   }
 
   Future<void> _saveUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      'sakhya_users',
-      allUsers.map((u) => jsonEncode(u.toJson())).toList(),
-    );
+    try {
+      await DatabaseHelper.instance.saveAllUsers(allUsers);
+    } catch (e) {
+      // Fallback to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+        'sakhya_users',
+        allUsers.map((u) => jsonEncode(u.toJson())).toList(),
+      );
+    }
   }
 
   Future<void> _saveCurrentUser() async {
     if (currentUser == null) return;
     final idx = allUsers.indexWhere((u) => u.id == currentUser!.id);
     if (idx >= 0) allUsers[idx] = currentUser!;
-    await _saveUsers();
+    try {
+      await DatabaseHelper.instance.saveUser(currentUser!);
+    } catch (e) {
+      await _saveUsers();
+    }
   }
 
   String _todayStr() {
@@ -240,12 +276,17 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Returns true if allocation is within acceptable range (±10% of suggested)
+  /// Returns true if both minimums are met AND within ±10% of suggested split
   bool validateAllocation() {
+    if (gharBalance < minGhar) return false;
+    if (dhandaBalance < minDhanda) return false;
     final tolerance = (dailyIncome * 0.10).round();
     final gharOk = (gharBalance - suggestedGhar).abs() <= tolerance;
     return gharOk;
   }
+
+  // Whether the current allocation attempt has been submitted and failed
+  bool allocationFailed = false;
 
   void submitAllocation() {
     final correct = validateAllocation();
@@ -255,16 +296,21 @@ class GameController extends ChangeNotifier {
     todaySummary!.usedLaxmiDidiHelp = usedHintThisAllocation;
 
     if (correct) {
+      allocationFailed = false;
       _addReward(2, category: 'game');
       if (!usedHintThisAllocation) _addReward(1, category: 'game'); // bonus
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '✅ Allocation'];
+      TtsService.instance.speak('शाबाश! आपने सही बँटवारा किया!');
+      _saveSummary();
+      currentPhase = GamePhase.store1; // ✅ only advance on correct
     } else {
+      allocationFailed = true;
       _addReward(-1, category: 'game');
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '❌ Allocation'];
+      TtsService.instance.speak('कोशिश करें। लक्ष्मी दीदी से मदद लें।');
+      _saveSummary();
+      // Stay on GamePhase.allocation — do NOT advance to store1
     }
-
-    _saveSummary();
-    currentPhase = GamePhase.store1;
     notifyListeners();
   }
 
@@ -316,10 +362,12 @@ class GameController extends ChangeNotifier {
       _addReward(usedHint ? 1 : 2, category: 'scam');
       todaySummary!.scamCorrect = true;
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '✅ Scam Rejected'];
+      TtsService.instance.speak('बहुत अच्छा! आपने scam को पहचाना!');
     } else {
       _addReward(-1, category: 'scam');
       todaySummary!.scamCorrect = false;
       todaySummary!.tasksCompleted = [...todaySummary!.tasksCompleted, '❌ Scam OTP Entered'];
+      TtsService.instance.speak('अगली बार सावधान रहें। OTP कभी न दें।');
     }
     _saveSummary();
     pendingScamEvent = false;
@@ -385,12 +433,16 @@ class GameController extends ChangeNotifier {
 
     _saveCurrentUser();
     
-    // Clear summary from storage
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('pending_summary_$userId');
+    // Delete today's summary from DB
+    try {
+      await DatabaseHelper.instance.deleteSummary(userId, _todayStr());
+    } catch (e) {
+      // Fallback: clear from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pending_summary_$userId');
+    }
     
     // RESET DAY FOR NEXT LOOP
-    // We stay logged in as requested
     todaySummary = DaySummary.forToday();
     unallocated = 0;
     gharBalance = 0;
@@ -435,6 +487,15 @@ class GameController extends ChangeNotifier {
   Future<void> wipeAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    // Also wipe SQLite
+    try {
+      for (final u in allUsers) {
+        await DatabaseHelper.instance.deleteSummary(u.id, _todayStr());
+      }
+      await DatabaseHelper.instance.saveAllUsers([]);
+    } catch (e) {
+      debugPrint('Wipe DB error: $e');
+    }
     allUsers.clear();
     currentUser = null;
     todaySummary = DaySummary.forToday();
@@ -470,44 +531,83 @@ class GameController extends ChangeNotifier {
   }
 
   void _checkAndFlushStaleSummary() async {
-    final prefs = await SharedPreferences.getInstance();
-    final summaryJson = prefs.getString('pending_summary_${currentUser?.id}');
-    if (summaryJson != null) {
-      try {
+    if (currentUser == null) return;
+    try {
+      // Try SQLite first
+      final summary = await DatabaseHelper.instance.loadLatestSummary(currentUser!.id);
+      if (summary != null && summary.date != _todayStr()) {
+        // It's from a previous day — flush it
+        rewardPoints += summary.totalRewardDelta;
+        currentUser!.lifetimeRewardPoints = rewardPoints;
+        currentUser!.totalSavings += summary.savings;
+
+        final yesterday = DateTime.now().subtract(const Duration(days: 1));
+        final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2,'0')}-${yesterday.day.toString().padLeft(2,'0')}';
+        if (currentUser!.lastCompletedDate == yStr) {
+          currentUser!.streakDays++;
+        } else if (summary.date == yStr) {
+          currentUser!.streakDays = 1;
+        }
+        currentUser!.lastCompletedDate = summary.date;
+        _saveCurrentUser();
+        await DatabaseHelper.instance.deleteSummary(currentUser!.id, summary.date);
+        return;
+      }
+    } catch (e) {
+      debugPrint('DB flush summary error: $e');
+    }
+
+    // Fallback: SharedPreferences migration
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final summaryJson = prefs.getString('pending_summary_${currentUser?.id}');
+      if (summaryJson != null) {
         final summary = DaySummary.fromJson(jsonDecode(summaryJson));
         if (summary.date != _todayStr()) {
-           // It's from a previous day! Flush it.
-           rewardPoints += summary.totalRewardDelta;
-           currentUser!.lifetimeRewardPoints = rewardPoints;
-           currentUser!.totalSavings += summary.savings;
-
-           // Streak logic
-           final yesterday = DateTime.now().subtract(const Duration(days: 1));
-           final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2,'0')}-${yesterday.day.toString().padLeft(2,'0')}';
-           if (currentUser!.lastCompletedDate == yStr) {
-             currentUser!.streakDays++;
-           } else if (summary.date == yStr) {
-             currentUser!.streakDays = 1;
-           }
-           currentUser!.lastCompletedDate = summary.date;
-           
-           _saveCurrentUser();
-           await prefs.remove('pending_summary_${currentUser?.id}');
+          rewardPoints += summary.totalRewardDelta;
+          currentUser!.lifetimeRewardPoints = rewardPoints;
+          currentUser!.totalSavings += summary.savings;
+          final yesterday = DateTime.now().subtract(const Duration(days: 1));
+          final yStr = '${yesterday.year}-${yesterday.month.toString().padLeft(2,'0')}-${yesterday.day.toString().padLeft(2,'0')}';
+          if (currentUser!.lastCompletedDate == yStr) {
+            currentUser!.streakDays++;
+          } else if (summary.date == yStr) {
+            currentUser!.streakDays = 1;
+          }
+          currentUser!.lastCompletedDate = summary.date;
+          _saveCurrentUser();
+          await prefs.remove('pending_summary_${currentUser?.id}');
         }
-      } catch (e) {
-        debugPrint('Error flushing summary: $e');
       }
+    } catch (e) {
+      debugPrint('Prefs flush error: $e');
     }
   }
 
   void _saveSummary() async {
     if (currentUser == null || todaySummary == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('pending_summary_${currentUser!.id}', jsonEncode(todaySummary!.toJson()));
+    try {
+      await DatabaseHelper.instance.saveSummary(currentUser!.id, todaySummary!);
+    } catch (e) {
+      // Fallback to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_summary_${currentUser!.id}', jsonEncode(todaySummary!.toJson()));
+    }
   }
 
   void _loadSummary() async {
     if (currentUser == null) return;
+    try {
+      final summary = await DatabaseHelper.instance.loadSummary(currentUser!.id, _todayStr());
+      if (summary != null) {
+        todaySummary = summary;
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      debugPrint('DB load summary error: $e');
+    }
+    // Fallback: SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final summaryJson = prefs.getString('pending_summary_${currentUser!.id}');
     if (summaryJson != null) {
@@ -518,7 +618,7 @@ class GameController extends ChangeNotifier {
           notifyListeners();
         }
       } catch (e) {
-        debugPrint('Error loading summary: $e');
+        debugPrint('Prefs load summary error: $e');
       }
     }
   }

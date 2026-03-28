@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_strings.dart';
 import 'home_dashboard.dart';
 import 'learn_screen.dart';
 import 'laxmi_didi_chat.dart';
@@ -43,6 +44,9 @@ class _MainShellState extends State<MainShell> {
   }
 
   PreferredSizeWidget _buildTopBar(BuildContext context, GameController controller) {
+    final strings = AppStrings.of(context);
+    final langCtrl = context.watch<LanguageController>();
+
     return AppBar(
       backgroundColor: AppColors.leafGreen,
       elevation: 0,
@@ -73,7 +77,6 @@ class _MainShellState extends State<MainShell> {
             ),
           ),
           const SizedBox(width: 12),
-          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -81,7 +84,7 @@ class _MainShellState extends State<MainShell> {
               Image.asset('assets/images/sakhya_logo.png', height: 24, fit: BoxFit.contain),
               if (controller.currentUser != null)
                 Text(
-                  'Namaste, ${controller.currentUser!.name.split(' ').first}!',
+                  '${strings.namaste}, ${controller.currentUser!.name.split(' ').first}!',
                   style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
             ],
@@ -89,11 +92,33 @@ class _MainShellState extends State<MainShell> {
         ],
       ),
       actions: [
+        // Language toggle
+        GestureDetector(
+          onTap: () => _showLanguagePicker(context, langCtrl, strings),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(color: Colors.white.withAlpha(30), borderRadius: BorderRadius.circular(20)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.language_rounded, color: Colors.white, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    langCtrl.isHindi ? 'हि' : 'EN',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         // Streak
         GestureDetector(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StreakCalendarScreen())),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: Colors.white.withAlpha(30), borderRadius: BorderRadius.circular(20)),
@@ -127,7 +152,7 @@ class _MainShellState extends State<MainShell> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+            padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: AppColors.turmeric, borderRadius: BorderRadius.circular(20)),
@@ -146,7 +171,50 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _showLanguagePicker(BuildContext context, LanguageController langCtrl, AppStrings strings) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.cardSurface,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 20),
+            Text(strings.languageLabel, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            const SizedBox(height: 20),
+            // Hindi option
+            _LanguageOption(
+              flag: '🇮🇳',
+              label: strings.languageHindi,
+              sublabel: 'Hindi',
+              selected: langCtrl.isHindi,
+              onTap: () { langCtrl.setHindi(); Navigator.pop(context); },
+            ),
+            const SizedBox(height: 12),
+            // English option
+            _LanguageOption(
+              flag: '🇬🇧',
+              label: strings.languageEnglish,
+              sublabel: 'English',
+              selected: !langCtrl.isHindi,
+              onTap: () { langCtrl.setEnglish(); Navigator.pop(context); },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomNav(BuildContext context, GameController controller) {
+    final strings = AppStrings.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -158,11 +226,11 @@ class _MainShellState extends State<MainShell> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _NavItem(icon: Icons.home_rounded, label: 'Ghar', index: 0, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
-              _NavItem(icon: Icons.menu_book_rounded, label: 'Seekhein', index: 1, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
-              _NavItem(icon: Icons.support_agent, label: 'Laxmi Didi', index: 2, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
+              _NavItem(icon: Icons.home_rounded, label: strings.navHome, index: 0, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
+              _NavItem(icon: Icons.menu_book_rounded, label: strings.navLearn, index: 1, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
+              _NavItem(icon: Icons.support_agent, label: strings.navLaxmiDidi, index: 2, currentIndex: _currentIndex, onTap: (i) => controller.setTabIndex(i)),
               _NavItem(
-                label: 'Aaj Ka Haal',
+                label: strings.navSummary,
                 index: 3,
                 currentIndex: _currentIndex,
                 onTap: (i) => controller.setTabIndex(i),
@@ -171,6 +239,53 @@ class _MainShellState extends State<MainShell> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  final String flag;
+  final String label;
+  final String sublabel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LanguageOption({
+    required this.flag, required this.label, required this.sublabel,
+    required this.selected, required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.leafGreen.withAlpha(20) : AppColors.lightCream,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? AppColors.leafGreen : AppColors.divider,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: selected ? AppColors.deepGreen : AppColors.textPrimary)),
+                Text(sublabel, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+            const Spacer(),
+            if (selected) const Icon(Icons.check_circle_rounded, color: AppColors.leafGreen, size: 24),
+          ],
         ),
       ),
     );
@@ -198,7 +313,7 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? AppColors.leafGreen.withAlpha(20) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
@@ -225,10 +340,12 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 color: selected ? AppColors.leafGreen : AppColors.warmGrey,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

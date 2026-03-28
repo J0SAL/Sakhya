@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sakhya needs microphone access so you can speak your questions to Laxmi Didi.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Sakhya uses speech recognition so you can ask Laxmi Didi questions by voice.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

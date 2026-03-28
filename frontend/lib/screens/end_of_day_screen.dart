@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
+import '../theme/app_strings.dart';
 import '../theme/app_theme.dart';
 
 class EndOfDayScreen extends StatefulWidget {
@@ -37,13 +38,13 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
+    final s = AppStrings.of(context);
     final income = controller.dailyIncome;
     final ghar = controller.gharBalance;
     final dhanda = controller.dhandaBalance;
     final totalSavings = controller.totalSavings;
     final progress = controller.monthlyGoalProgress;
 
-    // Estimate expense — will be finalised on completeEndOfDay()
     final user = controller.currentUser;
     final estExpense = user != null ? ((user.dailyExpenseMin + user.dailyExpenseMax) ~/ 2 ~/ 50) * 50 : 150;
     final estSavings = (ghar - estExpense).clamp(0, ghar);
@@ -59,9 +60,15 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
               children: [
                 const Text('🌇', style: TextStyle(fontSize: 64)),
                 const SizedBox(height: 12),
-                Text('Din Khatam Hua!', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppColors.deepGreen)),
+                Text(
+                  s.isHindi ? 'दिन खत्म हुआ!' : 'Day Complete!',
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppColors.deepGreen),
+                ),
                 const SizedBox(height: 4),
-                Text('Aaj aapne kitna sambhala?', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary)),
+                Text(
+                  s.isHindi ? 'आज आपने कितना संभाला?' : 'How did you manage today?',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                ),
                 const SizedBox(height: 32),
 
                 // Income breakdown
@@ -70,11 +77,11 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
                   decoration: AppTheme.warmCard(),
                   child: Column(
                     children: [
-                      _buildRow(context, '💰 Aaj ki Kamai', '₹$income', AppColors.leafGreen),
+                      _buildRow(context, s.isHindi ? '💰 आज की कमाई' : '💰 Today\'s Income', '₹$income', AppColors.leafGreen),
                       const Divider(height: 24, color: AppColors.divider),
-                      _buildRow(context, '🏠 Ghar pot (shuru)', '₹$ghar', AppColors.leafGreen),
+                      _buildRow(context, s.isHindi ? '🏠 घर (शुरुआत)' : '🏠 Home (start)', '₹$ghar', AppColors.leafGreen),
                       const SizedBox(height: 8),
-                      _buildRow(context, '🍚 Ghar ka kharcha (est.)', '-₹$estExpense', AppColors.kumkum),
+                      _buildRow(context, s.isHindi ? '🍚 घर का खर्चा (अनुमान)' : '🍚 Home expense (est.)', '-₹$estExpense', AppColors.kumkum),
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(14),
@@ -85,13 +92,17 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('🌟 Aaj Ki Bachat', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.deepGreen)),
-                            Text('≈₹$estSavings', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.leafGreen)),
+                            Text(
+                              s.isHindi ? '🌟 आज की बचत' : '🌟 Today\'s Savings',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.deepGreen),
+                            ),
+                            Text('≈₹$estSavings',
+                                style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.leafGreen)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildRow(context, '🪡 Dhanda baaki', '₹$dhanda', AppColors.turmeric),
+                      _buildRow(context, s.isHindi ? '🪡 धंधा बाकी' : '🪡 Business balance', '₹$dhanda', AppColors.turmeric),
                     ],
                   ),
                 ),
@@ -107,8 +118,14 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Mahiney Ka Lakshya 🎯', style: Theme.of(context).textTheme.headlineSmall),
-                          Text('₹${totalSavings + estSavings} / ₹${controller.monthlyGoal}', style: TextStyle(color: AppColors.leafGreen, fontWeight: FontWeight.w700, fontSize: 14)),
+                          Text(
+                            s.isHindi ? 'महीने का लक्ष्य' : 'Monthly Goal',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          Text(
+                            '₹${totalSavings + estSavings} / ₹${controller.monthlyGoal}',
+                            style: const TextStyle(color: AppColors.leafGreen, fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -122,7 +139,12 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text('${(progress * 100).toStringAsFixed(0)}% lakshya poora!', style: TextStyle(color: AppColors.deepGreen, fontWeight: FontWeight.w600)),
+                      Text(
+                        s.isHindi
+                            ? '${(progress * 100).toStringAsFixed(0)}% लक्ष्य पूरा!'
+                            : '${(progress * 100).toStringAsFixed(0)}% of goal reached!',
+                        style: const TextStyle(color: AppColors.deepGreen, fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                 ),
@@ -133,15 +155,20 @@ class _EndOfDayScreenState extends State<EndOfDayScreen> with SingleTickerProvid
                   ElevatedButton(
                     onPressed: () => _complete(context),
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.leafGreen),
-                    child: const Text('Bachat Jama Karein & Summary Dekhein 📊'),
+                    child: Text(
+                      s.isHindi ? 'बचत जमा करें और Summary देखें' : 'Save & View Summary',
+                    ),
                   )
                 else
-                  const Column(
+                  Column(
                     children: [
-                      SizedBox(height: 8),
-                      CircularProgressIndicator(color: AppColors.leafGreen),
-                      SizedBox(height: 12),
-                      Text('Summary khul rahi hai...', style: TextStyle(color: AppColors.textSecondary)),
+                      const SizedBox(height: 8),
+                      const CircularProgressIndicator(color: AppColors.leafGreen),
+                      const SizedBox(height: 12),
+                      Text(
+                        s.isHindi ? 'Summary खुल रही है...' : 'Opening summary...',
+                        style: const TextStyle(color: AppColors.textSecondary),
+                      ),
                     ],
                   ),
               ],

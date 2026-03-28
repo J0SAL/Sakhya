@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
+import '../services/tts_service.dart';
+import '../theme/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'otp_pin_pad_screen.dart';
 
@@ -16,7 +18,26 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
   bool _showHint = false;
   bool _resolved = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final s = AppStrings.of(context);
+      TtsService.instance.speakL(
+        isHindi: s.isHindi,
+        hindi: 'सावधान! आपको कॉल आ रहा है। KYC Manager के नाम से। यह Scam हो सकता है!',
+        english: 'Warning! You are getting a call from KYC Manager. This could be a scam!',
+      );
+    });
+  }
+
   void _reject(BuildContext context) {
+    final s = AppStrings.of(context);
+    TtsService.instance.speakL(
+      isHindi: s.isHindi,
+      hindi: 'शाबाश! कॉल रिजेक्ट किया! स्कैम से बच गई!',
+      english: 'Well done! You rejected the call! You avoided the scam!',
+    );
     context.read<GameController>().resolveScam(rejected: true, usedHint: _showHint);
     setState(() => _resolved = true);
     Future.delayed(const Duration(seconds: 2), () {
@@ -25,7 +46,6 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
   }
 
   void _answer(BuildContext context) async {
-    // Show OTP pad
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const OtpPinPadScreen()));
     if (!mounted) return;
     context.read<GameController>().resolveScam(rejected: false);
@@ -54,12 +74,13 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
           border: Border.all(color: borderColor, width: 2),
         ),
         padding: const EdgeInsets.all(24),
-        child: _resolved ? _buildResult() : _buildScamCall(context),
+        child: _resolved ? _buildResult(context) : _buildScamCall(context),
       ),
     );
   }
 
   Widget _buildScamCall(BuildContext context) {
+    final s = AppStrings.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -67,12 +88,15 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(color: AppColors.kumkum, borderRadius: BorderRadius.circular(20)),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.warning_amber, color: Colors.white, size: 16),
-              SizedBox(width: 6),
-              Text('⚠ Dhoka Ho Sakta Hai!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+              const Icon(Icons.warning_amber, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                s.isHindi ? '⚠ धोखा हो सकता है!' : '⚠ Possible Scam!',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+              ),
             ],
           ),
         ),
@@ -89,7 +113,10 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
         const SizedBox(height: 4),
         const Text('+92 300 987 6543', style: TextStyle(color: Colors.white54, fontSize: 16)),
         const SizedBox(height: 8),
-        const Text('📞 Aapko call aa raha hai...', style: TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          s.isHindi ? '📞 आपको कॉल आ रहा है...' : '📞 Incoming call...',
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
         const SizedBox(height: 20),
 
         // Laxmi Didi hint
@@ -102,15 +129,27 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.turmeric.withAlpha(80)),
             ),
-            child: const Text(
-              '👩 Laxmi Didi: SBI ya koi bank kabhi phone par OTP nahi maangta. Yeh SCAM hai — CALL MAT UTHAO! ✋',
-              style: TextStyle(color: AppColors.turmeric, fontSize: 13, fontWeight: FontWeight.w600),
+            child: Text(
+              s.isHindi
+                  ? '👩 लक्ष्मी दीदी: SBI या कोई भी बैंक कभी फोन पर OTP नहीं माँगता। यह SCAM है — कॉल मत उठाओ! ✋'
+                  : '👩 Laxmi Didi: SBI or any bank NEVER asks for OTP on the phone. This is a SCAM — Don\'t answer the call! ✋',
+              style: const TextStyle(color: AppColors.turmeric, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           )
         else
           TextButton(
-            onPressed: () => setState(() => _showHint = true),
-            child: const Text('👩 Laxmi Didi se poochein', style: TextStyle(color: AppColors.turmeric)),
+            onPressed: () {
+              setState(() => _showHint = true);
+              TtsService.instance.speakL(
+                isHindi: s.isHindi,
+                hindi: 'लक्ष्मी दीदी कहती हैं: SBI या कोई भी बैंक कभी फोन पर OTP नहीं माँगता। यह SCAM है। कॉल मत उठाओ!',
+                english: 'Laxmi Didi says: SBI or any bank never asks for OTP on the phone. This is a scam. Do not answer the call!',
+              );
+            },
+            child: Text(
+              s.isHindi ? '👩 लक्ष्मी दीदी से पूछें' : '👩 Ask Laxmi Didi',
+              style: const TextStyle(color: AppColors.turmeric),
+            ),
           ),
 
         // Action buttons
@@ -120,11 +159,11 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
               child: ElevatedButton(
                 onPressed: () => _reject(context),
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorRed, minimumSize: const Size(0, 52)),
-                child: const Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.call_end, size: 20),
-                    Text('Call Kaatein', style: TextStyle(fontSize: 12)),
+                    const Icon(Icons.call_end, size: 20),
+                    Text(s.isHindi ? 'कॉल काटें' : 'Reject Call', style: const TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
@@ -134,11 +173,11 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
               child: ElevatedButton(
                 onPressed: () => _answer(context),
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.successGreen, minimumSize: const Size(0, 52)),
-                child: const Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.call, size: 20),
-                    Text('Call Uthayein', style: TextStyle(fontSize: 12)),
+                    const Icon(Icons.call, size: 20),
+                    Text(s.isHindi ? 'कॉल उठाएं' : 'Answer Call', style: const TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
@@ -149,26 +188,44 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
     );
   }
 
-  Widget _buildResult() {
+  Widget _buildResult(BuildContext context) {
     final controller = context.read<GameController>();
     final correct = controller.todaySummary?.scamCorrect ?? false;
+    final s = AppStrings.of(context);
+
+    // Speak result
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TtsService.instance.speakL(
+        isHindi: s.isHindi,
+        hindi: correct
+            ? 'शाबाश! आपने स्कैम पहचाना! +2 सिक्के मिले!'
+            : 'ओह नहीं! OTP दे दिया! बैंक वाले कभी OTP नहीं माँगते। -1 सिक्का।',
+        english: correct
+            ? 'Well done! You identified the scam! +2 coins earned!'
+            : 'Oh no! You gave the OTP! Banks never ask for OTP. -1 coin.',
+      );
+    });
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(correct ? '🎉' : '😱', style: const TextStyle(fontSize: 56)),
         const SizedBox(height: 12),
         Text(
-          correct ? 'Shabash! Scam se bachein!' : 'Oh no! OTP de diya!',
+          correct
+              ? (s.isHindi ? 'शाबाश! स्कैम से बचीं!' : 'Well done! You avoided the scam!')
+              : (s.isHindi ? 'ओह नहीं! OTP दे दिया!' : 'Oh no! You gave the OTP!'),
           style: TextStyle(
             color: correct ? AppColors.successGreen : AppColors.errorRed,
             fontWeight: FontWeight.w800, fontSize: 20,
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           correct
-              ? '+2 sikke mile! Aap bahut samajhdaar hain! 💪'
-              : 'Bank wale kabhi OTP nahi maangte. -1 sikka. Laxmi Didi se seekhein.',
+              ? (s.isHindi ? '+2 सिक्के मिले! आप बहुत समझदार हैं! 💪' : '+2 coins earned! You are very smart! 💪')
+              : (s.isHindi ? 'बैंक वाले कभी OTP नहीं माँगते। -1 सिक्का।' : 'Banks never ask for OTP. -1 coin. Learn from Laxmi Didi.'),
           style: const TextStyle(color: Colors.white70, fontSize: 14),
           textAlign: TextAlign.center,
         ),
@@ -177,7 +234,7 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
   }
 }
 
-// Keep the old full-screen version for backward compat / direct navigation  
+// Keep the old full-screen version for backward compat / direct navigation
 class ScamGuardSimulatorScreen extends StatelessWidget {
   const ScamGuardSimulatorScreen({super.key});
 

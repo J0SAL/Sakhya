@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_strings.dart';
 import 'scam_guard_simulator.dart';
 
 class HomeDashboardScreen extends StatelessWidget {
@@ -32,13 +33,13 @@ class HomeDashboardScreen extends StatelessWidget {
           // Stats row
           Row(
             children: [
-              Expanded(child: _buildStatMini(context, '🏠 Ghar', '₹${controller.gharBalance}', AppColors.leafGreen)),
+              Expanded(child: _buildStatMini(context, AppStrings.of(context).gharLabel, '₹${controller.gharBalance}', AppColors.leafGreen)),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatMini(
-                  context, 
-                  '🪡 Dhanda', 
-                  '₹${controller.dhandaBalance}', 
+                  context,
+                  AppStrings.of(context).dhandaLabel,
+                  '₹${controller.dhandaBalance}',
                   AppColors.turmeric,
                   onTap: controller.dhandaBalance > 0 ? () => controller.goToStore() : null,
                 ),
@@ -47,7 +48,7 @@ class HomeDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Scam Dojo schedule & Dev Reset ghost buttons (for demo)
+          // Dev tools (ghost buttons for demo)
           const SizedBox(height: 120),
           Center(
             child: Column(
@@ -65,6 +66,7 @@ class HomeDashboardScreen extends StatelessWidget {
 
   Widget _buildGoalCard(BuildContext context, GameController controller, user) {
     final progress = controller.monthlyGoalProgress;
+    final strings = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -81,7 +83,7 @@ class HomeDashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Mahiney ka Lakshya 🎯', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              Text(strings.monthlyGoal, style: const TextStyle(color: Colors.white70, fontSize: 13)),
               Text('₹${controller.totalSavings} / ₹${controller.monthlyGoal}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
             ],
           ),
@@ -97,7 +99,7 @@ class HomeDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${(progress * 100).toStringAsFixed(0)}% poora ho gaya!',
+            '${(progress * 100).toStringAsFixed(0)}${strings.goalProgress}',
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
           ),
         ],
@@ -106,6 +108,7 @@ class HomeDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStartDayCard(BuildContext context, GameController controller) {
+    final strings = AppStrings.of(context);
     return Container(
       width: double.infinity,
       decoration: AppTheme.warmCard(),
@@ -114,10 +117,10 @@ class HomeDashboardScreen extends StatelessWidget {
         children: [
           const Text('☀️', style: TextStyle(fontSize: 56)),
           const SizedBox(height: 12),
-          Text('Aaj ka naya din!', style: Theme.of(context).textTheme.headlineLarge),
+          Text(strings.startDayTitle, style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
           Text(
-            'Shuru karein aur aaj ki kamai sambhalein',
+            strings.startDaySubtitle,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -129,7 +132,7 @@ class HomeDashboardScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 48),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
-            child: const Text('Din Shuru Karein 🌅', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            child: Text(strings.startDayButton, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -138,6 +141,7 @@ class HomeDashboardScreen extends StatelessWidget {
 
   Widget _buildDayCompletedCard(BuildContext context, GameController controller) {
     final summary = controller.todaySummary;
+    final strings = AppStrings.of(context);
     return Container(
       width: double.infinity,
       decoration: AppTheme.warmCard(color: AppColors.leafGreen.withAlpha(15)),
@@ -146,11 +150,11 @@ class HomeDashboardScreen extends StatelessWidget {
         children: [
           const Text('🌟', style: TextStyle(fontSize: 48)),
           const SizedBox(height: 12),
-          Text('Aaj ka din poora hua!', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppColors.deepGreen)),
+          Text(strings.dayDoneTitle, style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppColors.deepGreen)),
           const SizedBox(height: 8),
           if (summary != null) ...[
-            Text('Kamai: ₹${summary.incomeEarned}', style: Theme.of(context).textTheme.bodyLarge),
-            Text('Bachat: ₹${summary.savings}', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.leafGreen, fontWeight: FontWeight.w700)),
+            Text('${strings.kamai}: ₹${summary.incomeEarned}', style: Theme.of(context).textTheme.bodyLarge),
+            Text('${strings.bachat}: ₹${summary.savings}', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.leafGreen, fontWeight: FontWeight.w700)),
           ],
           const SizedBox(height: 24),
           ElevatedButton(
@@ -160,7 +164,7 @@ class HomeDashboardScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 48),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
-            child: const Text('Aaj ka summary dekhein 📊', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            child: Text(strings.summaryButton, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -168,6 +172,7 @@ class HomeDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatMini(BuildContext context, String label, String value, Color color, {VoidCallback? onTap}) {
+    final strings = AppStrings.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -191,7 +196,7 @@ class HomeDashboardScreen extends StatelessWidget {
             Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 22)),
             if (onTap != null) ...[
               const SizedBox(height: 4),
-              Text('Wapas Shop ➔', style: TextStyle(color: color.withAlpha(180), fontSize: 10, fontWeight: FontWeight.w600)),
+              Text(strings.wapasShop, style: TextStyle(color: color.withAlpha(180), fontSize: 10, fontWeight: FontWeight.w600)),
             ],
           ],
         ),

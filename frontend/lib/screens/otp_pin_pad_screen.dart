@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Used within scam dojo — shown in the dark scam dialog context
@@ -16,7 +17,6 @@ class _OtpPinPadScreenState extends State<OtpPinPadScreen> {
     if (_pin.length < 4) {
       setState(() => _pin += digit);
       if (_pin.length == 4) {
-        // Auto-dismiss after "entering" OTP — will be handled by caller
         Future.delayed(const Duration(milliseconds: 600), () {
           if (mounted) Navigator.pop(context);
         });
@@ -30,10 +30,14 @@ class _OtpPinPadScreenState extends State<OtpPinPadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFF1A0A00),
       appBar: AppBar(
-        title: const Text('OTP Darj Karein', style: TextStyle(color: Colors.white, fontSize: 16)),
+        title: Text(
+          s.isHindi ? 'OTP दर्ज करें' : 'Enter OTP',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -41,28 +45,46 @@ class _OtpPinPadScreenState extends State<OtpPinPadScreen> {
       body: Column(
         children: [
           const SizedBox(height: 20),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              '⚠️ Kabhi bhi OTP kisi ke saath share mat karein — banks, police ya koi bhi nahi!',
+              s.isHindi
+                  ? 'कभी भी OTP किसी के साथ Share मत करें — बैंक, पुलिस या कोई भी नहीं!'
+                  : 'Never share OTP with anyone — not banks, police, or anyone!',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.turmeric, fontSize: 15, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: AppColors.turmeric,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(height: 32),
           // OTP dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(4, (i) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              width: 50, height: 60,
-              decoration: BoxDecoration(
-                color: i < _pin.length ? AppColors.errorRed.withAlpha(40) : Colors.white12,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: i < _pin.length ? AppColors.errorRed : Colors.white24),
+            children: List.generate(
+              4,
+              (i) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                width: 50,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: i < _pin.length
+                      ? AppColors.errorRed.withAlpha(40)
+                      : Colors.white12,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: i < _pin.length
+                          ? AppColors.errorRed
+                          : Colors.white24),
+                ),
+                child: Center(
+                  child: Text(i < _pin.length ? '●' : '',
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 24)),
+                ),
               ),
-              child: Center(child: Text(i < _pin.length ? '●' : '', style: const TextStyle(color: Colors.white, fontSize: 24))),
-            )),
+            ),
           ),
           const Spacer(),
           // Numpad
@@ -74,13 +96,26 @@ class _OtpPinPadScreenState extends State<OtpPinPadScreen> {
               childAspectRatio: 2,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                ...List.generate(9, (i) => TextButton(
-                  onPressed: () => _tap('${i + 1}'),
-                  child: Text('${i + 1}', style: const TextStyle(fontSize: 24, color: Colors.white)),
-                )),
+                ...List.generate(
+                  9,
+                  (i) => TextButton(
+                    onPressed: () => _tap('${i + 1}'),
+                    child: Text('${i + 1}',
+                        style: const TextStyle(
+                            fontSize: 24, color: Colors.white)),
+                  ),
+                ),
                 const SizedBox.shrink(),
-                TextButton(onPressed: () => _tap('0'), child: const Text('0', style: TextStyle(fontSize: 24, color: Colors.white))),
-                TextButton(onPressed: _delete, child: const Icon(Icons.backspace, color: Colors.white54)),
+                TextButton(
+                  onPressed: () => _tap('0'),
+                  child: const Text('0',
+                      style: TextStyle(fontSize: 24, color: Colors.white)),
+                ),
+                TextButton(
+                  onPressed: _delete,
+                  child:
+                      const Icon(Icons.backspace, color: Colors.white54),
+                ),
               ],
             ),
           ),
