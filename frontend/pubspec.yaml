@@ -51,6 +51,7 @@ dependencies:
   # Online sync — connectivity check + HTTP client
   connectivity_plus: ^6.1.1
   http: ^1.2.2
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:
