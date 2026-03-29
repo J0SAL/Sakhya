@@ -6,10 +6,13 @@
 
 > *"We don’t teach theory. We simulate survival."*
 
-**Team:** FinSpark  
-**Hackathon:** Gamifying Financial Literacy for Bharat. Interactive Learning through Play  
+**Team:** FinSpark
+
+**Hackathon:** [Innovate4FinLit](https://vision.hack2skill.com/event/ncfehackathon2025?utm_source=hack2skill&utm_medium=homepage)
+
 **Track B:** The Woman  
-**Problem Statement:** Overcoming the psychological barriers of digital finance for rural women.
+
+**Problem Statement:** Overcoming the psychological barriers of digital finance for rural women
 
 [![Demo Video](https://img.shields.io/badge/🎥_Demo_Video-Click_Here-red?style=for-the-badge)](https://drive.google.com/file/d/19ZkYxHghAnsuMGvaq4wuZI7l3uHHYx1N/view?usp=drive_link)
 [![PPT Presentation](https://img.shields.io/badge/📊_Pitch_Deck-Click_Here-blue?style=for-the-badge)](https://www.canva.com/design/DAHFUg2ha7o/G94lnDcfBnxIMn3MC3Ycfw/edit?utm_content=DAHFUg2ha7o&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
