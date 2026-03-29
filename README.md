@@ -138,7 +138,7 @@ To verify the offline-first architecture:
 | :---: | :---: | :---: | :---: |
 | ![Screen 5](https://github.com/user-attachments/assets/92cc6466-af8f-4a83-9f61-2002c4d79d4d) | ![Screen 6](https://github.com/user-attachments/assets/1e220c37-8f59-460e-9053-17e68a680873) | ![Screen 7](https://github.com/user-attachments/assets/ab7e0887-c9cd-4966-9702-045654a29c0c) | ![Screen 8](https://github.com/user-attachments/assets/407c8176-1351-46b2-bf84-8fcdf98eb9df) |
 
-| Learning Module | Language | End Day Summary | Rewards |
+| Learning Module | Streak | End Day Summary | Rewards |
 | :---: | :---: | :---: | :---: |
 | ![Screen 9](https://github.com/user-attachments/assets/68e5389a-931a-479f-9ae5-b457c934c618) | ![Screen 10](https://github.com/user-attachments/assets/87eb048b-40f6-4f5d-987e-a86acc73da12) | ![Screen 11](https://github.com/user-attachments/assets/563f9724-0388-480f-a1cb-b703ed1121e8) | ![Screen 12](https://github.com/user-attachments/assets/9f6f1ac4-a265-44db-a791-4ee5e2339920) |
 
