@@ -1,6 +1,8 @@
 <div align="center">
   
 # 🪷 Sakhya: Financial Independence for Rural Women
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/579d9dbb-4f45-4237-a3dd-80d2cd00ba25"/>
+
 
 > *"We don’t teach theory. We simulate survival."*
 
@@ -132,9 +134,9 @@ To verify the offline-first architecture:
 | :---: | :---: | :---: | :---: |
 | ![Screen 1](https://github.com/user-attachments/assets/743dd89e-5801-48f9-89f3-527d699aabbe) | ![Screen 2](https://github.com/user-attachments/assets/e97ef6fb-1dbb-4988-b9cb-669dd570b60a) | ![Screen 3](https://github.com/user-attachments/assets/a5a58299-93cb-4edc-9832-7e493bd2edfe) | ![Screen 4](https://github.com/user-attachments/assets/1ddbc444-8f67-43f5-aa4f-0725bfc4f935) |
 
-| Laxmi Didi Chat | Store (Supplies) | Mock UPI | Scam Dojo |
+| Laxmi Didi Chat | Store (Supplies) | Mock UPI | Scam Dojo(Call) |
 | :---: | :---: | :---: | :---: |
-| ![Screen 5](https://github.com/user-attachments/assets/92cc6466-af8f-4a83-9f61-2002c4d79d4d) | ![Screen 6](https://github.com/user-attachments/assets/1e220c37-8f59-460e-9053-17e68a680873) | ![Screen 7](https://github.com/user-attachments/assets/ab7e0887-c9cd-4966-9702-045654a29c0c) | ![Screen 8](https://github.com/user-attachments/assets/b76bb4d3-a0a2-4ce8-9d11-254bf7c3a551) |
+| ![Screen 5](https://github.com/user-attachments/assets/92cc6466-af8f-4a83-9f61-2002c4d79d4d) | ![Screen 6](https://github.com/user-attachments/assets/1e220c37-8f59-460e-9053-17e68a680873) | ![Screen 7](https://github.com/user-attachments/assets/ab7e0887-c9cd-4966-9702-045654a29c0c) | ![Screen 8](https://github.com/user-attachments/assets/407c8176-1351-46b2-bf84-8fcdf98eb9df) |
 
 | Learning Module | Language | End Day Summary | Rewards |
 | :---: | :---: | :---: | :---: |
