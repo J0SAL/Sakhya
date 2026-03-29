@@ -11,7 +11,7 @@ class AppConfig {
 
   /// Base URL for the Sakhya sync backend.
   /// Change this to an ngrok tunnel or remote server when running on a real device.
-  static const String backendUrl = 'http://10.0.2.2:5001'; // Android emulator → host
+  static const String backendUrl = 'http://192.168.0.106:5001'; // Local Wi-Fi network
   // static const String backendUrl = 'http://localhost:5001'; // iOS simulator / web
   // static const String backendUrl = 'https://xxxx.ngrok-free.app'; // ngrok
   // static const String backendUrl = 'https://api.yourdomain.com';  // production
