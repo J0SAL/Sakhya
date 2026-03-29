@@ -239,6 +239,15 @@ class GameController extends ChangeNotifier {
     dailyIncome = rawMin + rng.nextInt(steps + 1) * 100;
     // Snap to 100
     dailyIncome = ((dailyIncome / 100).round()) * 100;
+    
+    // Ensure the day's income is always strictly greater than sum of min of ghar and dhanda
+    final int minRequired = minGhar + minDhanda;
+    if (dailyIncome <= minRequired) {
+      dailyIncome = (minRequired ~/ 100 + 1) * 100;
+      if (dailyIncome <= minRequired) {
+        dailyIncome += 100;
+      }
+    }
 
     gharBalance = 0;
     dhandaBalance = 0;

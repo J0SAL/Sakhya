@@ -251,6 +251,15 @@ abstract class AppStrings {
   String get minDhandaLabel;        // "Min ₹150 dhande ke liye zaroori"
   String get allocationFailMsg;     // message when below min
   String get tryAgainMsg;
+
+  // ── Streak Calendar
+  String get streakTitle;
+  String get streakDaysLabel;
+  String get last7Days;
+  String get streakMsg7Plus;
+  String get streakMsg3Plus;
+  String get streakMsg0Plus;
+  List<String> get weekDaysShort;
 }
 
 // ── Provider helper ───────────────────────────────────────────────────────────
@@ -451,6 +460,15 @@ class _HiStrings extends AppStrings {
   @override String get minDhandaLabel => 'न्यूनतम ₹150 धंधे के लिए जरूरी';
   @override String get allocationFailMsg => 'न्यूनतम राशि नहीं दी। लक्ष्मी दीदी से मदद लें! -1 point';
   @override String get tryAgainMsg => 'फिर से कोशिश करें 🔄';
+
+  // Streak Calendar
+  @override String get streakTitle => 'सिलसिला';
+  @override String get streakDaysLabel => 'दिन का सिलसिला!';
+  @override String get last7Days => 'पिछले 7 दिन';
+  @override String get streakMsg7Plus => '🏆 वाह! एक पूरा हफ्ता! आप किसी से कम नहीं!';
+  @override String get streakMsg3Plus => '💪 बहुत अच्छा! कल भी खेलें और सिलसिला बनाए रखें!';
+  @override String get streakMsg0Plus => 'आज खेलें और अपना सिलसिला शुरू करें! 🌟';
+  @override List<String> get weekDaysShort => const ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'];
 }
 
 // ── English translations ──────────────────────────────────────────────────────
@@ -627,4 +645,13 @@ class _EnStrings extends AppStrings {
   @override String get minDhandaLabel => 'Min ₹150 required for business';
   @override String get allocationFailMsg => 'Minimum not met. Laxmi Didi suggests more! -1 point';
   @override String get tryAgainMsg => 'Try Again 🔄';
+
+  // Streak Calendar
+  @override String get streakTitle => 'Streak';
+  @override String get streakDaysLabel => 'Day Streak!';
+  @override String get last7Days => 'Last 7 Days';
+  @override String get streakMsg7Plus => '🏆 Wow! A full week! You are doing great!';
+  @override String get streakMsg3Plus => '💪 Very good! Play tomorrow and keep the streak!';
+  @override String get streakMsg0Plus => 'Play today and start your streak! 🌟';
+  @override List<String> get weekDaysShort => const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 }
