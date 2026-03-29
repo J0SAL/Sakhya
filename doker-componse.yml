@@ -11,7 +11,30 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sakhya-backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override DB URL to use docker service name instead of localhost
+      POSTGRES_DB_URL: postgresql://postgres:password@postgres:5432/sakhya
+      BACKEND_HOST: 0.0.0.0
+      BACKEND_PORT: "5001"
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
-  redis_data:
   postgres_data:

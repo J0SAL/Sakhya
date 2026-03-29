@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import '../models/user_profile.dart';
 import '../models/day_summary.dart';
 import '../models/learning_lesson.dart';
 import '../services/database_helper.dart';
+import '../services/sync_service.dart';
 import '../services/tts_service.dart';
 
 enum GamePhase {
@@ -157,6 +159,8 @@ class GameController extends ChangeNotifier {
     } catch (e) {
       await _saveUsers();
     }
+    // Fire-and-forget online sync — never awaited, never disrupts the user
+    unawaited(SyncService.instance.syncUser(currentUser!));
   }
 
   String _todayStr() {
@@ -593,6 +597,8 @@ class GameController extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('pending_summary_${currentUser!.id}', jsonEncode(todaySummary!.toJson()));
     }
+    // Fire-and-forget online sync — never awaited, never disrupts the user
+    unawaited(SyncService.instance.syncSummary(currentUser!.id, todaySummary!));
   }
 
   void _loadSummary() async {
