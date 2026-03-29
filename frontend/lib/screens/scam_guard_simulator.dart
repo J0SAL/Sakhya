@@ -47,7 +47,7 @@ class _ScamGuardDialogState extends State<ScamGuardDialog> {
 
   void _answer(BuildContext context) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const OtpPinPadScreen()));
-    if (!mounted) return;
+    if (!context.mounted) return;
     context.read<GameController>().resolveScam(rejected: false);
     setState(() => _resolved = true);
     Future.delayed(const Duration(seconds: 3), () {
